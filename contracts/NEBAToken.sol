@@ -159,15 +159,15 @@ contract NEBAToken is
      * @param account Address to blocklist
      * @dev Restricted to BLOCKLIST_MANAGER_ROLE only
      */
-    function addToBlocklist(
-        address account
-    ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
-        if (account == address(0)) revert ZeroAddress();
-        if (_blocklist[account]) return;
+    // function addToBlocklist(
+    //     address account
+    // ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
+    //     if (account == address(0)) revert ZeroAddress();
+    //     if (_blocklist[account]) return;
 
-        _blocklist[account] = true;
-        emit AddressBlocklisted(account, block.timestamp);
-    }
+    //     _blocklist[account] = true;
+    //     emit AddressBlocklisted(account, block.timestamp);
+    // }
 
     /**
      * @notice Adds multiple addresses to blocklist in batch and checks for zero address and already blocklisted addresses
@@ -198,15 +198,15 @@ contract NEBAToken is
      * @param account Address to remove from blocklist
      * @dev Restricted to BLOCKLIST_MANAGER_ROLE only
      */
-    function removeFromBlocklist(
-        address account
-    ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
-        if (account == address(0)) revert ZeroAddress();
-        if (!_blocklist[account]) return;
+    // function removeFromBlocklist(
+    //     address account
+    // ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
+    //     if (account == address(0)) revert ZeroAddress();
+    //     if (!_blocklist[account]) return;
 
-        _blocklist[account] = false;
-        emit AddressUnblocklisted(account, block.timestamp);
-    }
+    //     _blocklist[account] = false;
+    //     emit AddressUnblocklisted(account, block.timestamp);
+    // }
 
     /**
      * @notice Removes multiple addresses from blocklist in batch
