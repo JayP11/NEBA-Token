@@ -59,7 +59,10 @@ contract NEBAToken is
     error BlocklistedAddress(address account);
     error ZeroAddress();
     error ZeroAmount();
-    error CooldownNotExpired(uint256 remainingTime);
+    error AlreadyBlocklisted(address account);
+    error NotBlocklisted(address account);
+
+    // error CooldownNotExpired(uint256 remainingTime);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -181,6 +184,7 @@ contract NEBAToken is
         for (uint256 i = 0; i < length; ) {
             address account = accounts[i];
             if (account == address(0)) revert ZeroAddress();
+            if (_blocklist[account]) revert AlreadyBlocklisted(account);
 
             if (!_blocklist[account]) {
                 _blocklist[account] = true;
@@ -220,6 +224,7 @@ contract NEBAToken is
         for (uint256 i = 0; i < length; ) {
             address account = accounts[i];
             if (account == address(0)) revert ZeroAddress();
+            if (!_blocklist[account]) revert NotBlocklisted(account);
 
             if (_blocklist[account]) {
                 _blocklist[account] = false;
@@ -261,7 +266,8 @@ contract NEBAToken is
         )
         whenNotPaused
     {
-        // Blocklist checks (except for minting)
+        if (amount == 0) revert ZeroAmount();
+
         if (from != address(0) && _blocklist[from]) {
             revert BlocklistedAddress(from);
         }
@@ -309,7 +315,7 @@ contract NEBAToken is
      * @notice Returns the last pause timestamp
      * @return uint256 Timestamp of last pause
      */
-    function getLastPauseTimestamp() external view returns (uint256) {
-        return _lastPauseTimestamp;
-    }
+    // function getLastPauseTimestamp() external view returns (uint256) {
+    //     return _lastPauseTimestamp;
+    // }
 }
