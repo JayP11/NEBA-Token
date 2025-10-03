@@ -78,6 +78,24 @@ contract NEBATokenTest is Test {
         nebaToken.initialize(adminTreasury, upgraderAddress, botAddress);
     }
 
+    function test_RoleManagement_AdminCanGrantAndRevokeRoles() public {
+        vm.prank(adminTreasury);
+        nebaToken.grantRole(BLOCKLIST_MANAGER_ROLE, user1);
+        assertTrue(nebaToken.hasRole(BLOCKLIST_MANAGER_ROLE, user1));
+
+        vm.prank(adminTreasury);
+        nebaToken.revokeRole(BLOCKLIST_MANAGER_ROLE, user1);
+        assertFalse(nebaToken.hasRole(BLOCKLIST_MANAGER_ROLE, user1));
+
+        vm.prank(user1);
+        vm.expectRevert();
+        nebaToken.grantRole(BLOCKLIST_MANAGER_ROLE, user2);
+
+        vm.prank(user1);
+        vm.expectRevert();
+        nebaToken.revokeRole(BLOCKLIST_MANAGER_ROLE, user2);
+    }
+
     //  PAUSE TESTS
 
     function test_pause() public {
@@ -90,6 +108,15 @@ contract NEBATokenTest is Test {
         vm.prank(botAddress);
         nebaToken.pause();
         assertEq(nebaToken.paused(), true);
+    }
+
+    function test_unpause_by_botAddress() public {
+        vm.prank(botAddress);
+        nebaToken.pause();
+
+        vm.prank(botAddress);
+        vm.expectRevert();
+        nebaToken.unpause();
     }
 
     function test_revertWhen_pauseBy_nonPauser() public {
@@ -171,6 +198,15 @@ contract NEBATokenTest is Test {
         assertEq(nebaToken.isBlocklisted(user2), true);
     }
 
+    function testAddToBlocklistBatch_RevertOn_ZeroAddress() public {
+        address[] memory accounts = new address[](1);
+        accounts[0] = address(0);
+
+        vm.prank(adminTreasury);
+        vm.expectRevert(NEBAToken.ZeroAddress.selector);
+        nebaToken.addToBlocklistBatch(accounts);
+    }
+
     function testAddToBlocklistBatch_Revert_InvalidCall() public {
         address[] memory accounts1 = new address[](1);
         accounts1[0] = user1;
@@ -218,6 +254,15 @@ contract NEBATokenTest is Test {
 
         assertFalse(nebaToken.isBlocklisted(user1));
         assertFalse(nebaToken.isBlocklisted(user2));
+    }
+
+    function testRemoveFromBlocklistBatch_RevertOn_ZeroAddress() public {
+        address[] memory accounts = new address[](1);
+        accounts[0] = address(0);
+
+        vm.prank(adminTreasury);
+        vm.expectRevert(NEBAToken.ZeroAddress.selector);
+        nebaToken.removeFromBlocklistBatch(accounts);
     }
 
     function testRemoveFromBlocklistBatch_Revert_InvalidCall() public {
@@ -303,6 +348,22 @@ contract NEBATokenTest is Test {
         nebaToken.approve(user2, 100 * 10 ** 18);
     }
 
+    function test_Approve_RevertIf_SpenderBlocklisted() public {
+        vm.prank(adminTreasury);
+        nebaToken.transfer(user2, 1000 * 10 ** 18);
+
+        address[] memory accounts = new address[](1);
+        accounts[0] = user1;
+        vm.prank(adminTreasury);
+        nebaToken.addToBlocklistBatch(accounts);
+
+        vm.prank(user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1)
+        );
+        nebaToken.approve(user1, 100 * 10 ** 18);
+    }
+
     function test_TransferFrom_RevertIf_SenderBlocklisted() public {
         vm.startPrank(adminTreasury);
         nebaToken.transfer(user1, 1000 * 10 ** 18);
@@ -341,5 +402,29 @@ contract NEBATokenTest is Test {
             abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user2)
         );
         nebaToken.transferFrom(user1, user2, 100 * 10 ** 18);
+    }
+
+    function test_Transfer_RevertIf_Paused() public {
+        vm.prank(adminTreasury);
+        nebaToken.pause();
+
+        vm.prank(adminTreasury);
+        vm.expectRevert();
+        nebaToken.transfer(user1, 100 * 10 ** 18);
+    }
+
+    function test_Approve_RevertIf_Paused() public {
+        vm.prank(adminTreasury);
+        nebaToken.pause();
+
+        vm.prank(adminTreasury);
+        vm.expectRevert();
+        nebaToken.approve(user1, 100 * 10 ** 18);
+    }
+
+    function test_Transfer_RevertIf_ZeroAmount() public {
+        vm.prank(adminTreasury);
+        vm.expectRevert(NEBAToken.ZeroAmount.selector);
+        nebaToken.transfer(user1, 0);
     }
 }

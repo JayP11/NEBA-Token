@@ -45,10 +45,10 @@ contract NEBAToken is
 
     uint256 public constant INITIAL_SUPPLY = 1_000_000_000 * 10 ** 18;
     mapping(address => bool) private _blocklist;
-    uint256 private _lastPauseTimestamp;
+    // uint256 private _lastPauseTimestamp;
     // uint256 public constant CIRCUIT_BREAKER_COOLDOWN = 30 minutes;
 
-    // CRITICAL: Storage gap for safe upgrades
+    // Storage gap for safe upgrades
     uint256[48] private __gap;
 
     event AddressBlocklisted(address indexed account, uint256 timestamp);
@@ -119,9 +119,8 @@ contract NEBAToken is
      * @dev Can only be called by ADMIN_PAUSER_ROLE and BOT_PAUSER_ROLE.
      */
     function pause() public onlyPausers whenNotPaused {
-        // _lastPauseTimestamp = block.timestamp;
         _pause();
-        // emit CircuitBreakerActivated(msg.sender, block.timestamp);
+        emit CircuitBreakerActivated(msg.sender, block.timestamp);
     }
 
     /**
@@ -129,24 +128,9 @@ contract NEBAToken is
      * @dev Can only be called by ADMIN_PAUSER_ROLE.
      */
     function unpause() public onlyRole(ADMIN_PAUSER_ROLE) whenPaused {
-        // if (block.timestamp < _lastPauseTimestamp + CIRCUIT_BREAKER_COOLDOWN) {
-        //     revert CooldownNotExpired(
-        //         (_lastPauseTimestamp + CIRCUIT_BREAKER_COOLDOWN) -
-        //             block.timestamp
-        //     );
-        // }
         _unpause();
-        // emit CircuitBreakerDeactivated(msg.sender, block.timestamp);
+        emit CircuitBreakerDeactivated(msg.sender, block.timestamp);
     }
-
-    /**
-     * @notice Returns timestamp when unpause will be available
-     * @return uint256 Timestamp when circuit breaker can be deactivated
-     */
-    // function getUnpauseAvailableAt() external view returns (uint256) {
-    //     if (!paused()) return 0;
-    //     return _lastPauseTimestamp + CIRCUIT_BREAKER_COOLDOWN;
-    // }
 
     /**
      * @notice Authorizes contract upgrades
@@ -156,21 +140,6 @@ contract NEBAToken is
     function _authorizeUpgrade(
         address newImplementation
     ) internal override onlyRole(UPGRADER_ROLE) {}
-
-    /**
-     * @notice Adds an address to the blocklist and checks for zero address and already blocklisted addresses
-     * @param account Address to blocklist
-     * @dev Restricted to BLOCKLIST_MANAGER_ROLE only
-     */
-    // function addToBlocklist(
-    //     address account
-    // ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
-    //     if (account == address(0)) revert ZeroAddress();
-    //     if (_blocklist[account]) return;
-
-    //     _blocklist[account] = true;
-    //     emit AddressBlocklisted(account, block.timestamp);
-    // }
 
     /**
      * @notice Adds multiple addresses to blocklist in batch and checks for zero address and already blocklisted addresses
@@ -186,31 +155,14 @@ contract NEBAToken is
             if (account == address(0)) revert ZeroAddress();
             if (_blocklist[account]) revert AlreadyBlocklisted(account);
 
-            if (!_blocklist[account]) {
-                _blocklist[account] = true;
-                emit AddressBlocklisted(account, block.timestamp);
-            }
+            _blocklist[account] = true;
+            emit AddressBlocklisted(account, block.timestamp);
 
             unchecked {
                 ++i;
             }
         }
     }
-
-    /**
-     * @notice Removes an address from the blocklist and checks for zero address and not blocklisted addresses
-     * @param account Address to remove from blocklist
-     * @dev Restricted to BLOCKLIST_MANAGER_ROLE only
-     */
-    // function removeFromBlocklist(
-    //     address account
-    // ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
-    //     if (account == address(0)) revert ZeroAddress();
-    //     if (!_blocklist[account]) return;
-
-    //     _blocklist[account] = false;
-    //     emit AddressUnblocklisted(account, block.timestamp);
-    // }
 
     /**
      * @notice Removes multiple addresses from blocklist in batch
@@ -226,10 +178,8 @@ contract NEBAToken is
             if (account == address(0)) revert ZeroAddress();
             if (!_blocklist[account]) revert NotBlocklisted(account);
 
-            if (_blocklist[account]) {
-                _blocklist[account] = false;
-                emit AddressUnblocklisted(account, block.timestamp);
-            }
+            _blocklist[account] = false;
+            emit AddressUnblocklisted(account, block.timestamp);
 
             unchecked {
                 ++i;
@@ -310,12 +260,4 @@ contract NEBAToken is
         if (_blocklist[spender]) revert BlocklistedAddress(spender);
         super._approve(owner, spender, value, emitEvent);
     }
-
-    /**
-     * @notice Returns the last pause timestamp
-     * @return uint256 Timestamp of last pause
-     */
-    // function getLastPauseTimestamp() external view returns (uint256) {
-    //     return _lastPauseTimestamp;
-    // }
 }
