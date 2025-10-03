@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -12,16 +12,15 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 /**
  * @title NEBAToken
  * @author NEBA Team
- * @notice ERC-20 token with pausable transfers, permit functionality, voting capabilities,
+ * @notice ERC-20 token with pausable transfers, permit functionality,
  *         blocklist management, and UUPS upgradeability
  * @dev Phase 1 implementation with hardened security and compliance features
  *
  * Key Features:
  * - Fixed supply of 1 billion tokens
  * - UUPS upgradeable proxy pattern
- * - Role-based access control (Admin, Upgrader, Pauser, Blocklist Manager)
+ * - Role-based access control (Admin, Upgrader, Admin Pauser, Bot Pauser, Blocklist Manager)
  * - Pausable transfers for emergency controls
- * - Blocklist for geo-restrictions and malicious actors
  * - EIP-2612 Permit for gasless approvals
  * - ERC20Votes for future governance
  * - Reentrancy protection
@@ -32,21 +31,18 @@ contract NEBAToken is
     ERC20PausableUpgradeable,
     AccessControlUpgradeable,
     ERC20PermitUpgradeable,
-    ERC20VotesUpgradeable,
+    // ERC20VotesUpgradeable,
     UUPSUpgradeable,
     ReentrancyGuardUpgradeable
 {
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant ADMIN_PAUSER_ROLE = keccak256("ADMIN_PAUSER_ROLE");
     bytes32 public constant BOT_PAUSER_ROLE = keccak256("BOT_PAUSER_ROLE");
-    // bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant BLOCKLIST_MANAGER_ROLE =
         keccak256("BLOCKLIST_MANAGER_ROLE");
 
     uint256 public constant INITIAL_SUPPLY = 1_000_000_000 * 10 ** 18;
     mapping(address => bool) private _blocklist;
-    // uint256 private _lastPauseTimestamp;
-    // uint256 public constant CIRCUIT_BREAKER_COOLDOWN = 30 minutes;
 
     // Storage gap for safe upgrades
     uint256[48] private __gap;
@@ -61,8 +57,7 @@ contract NEBAToken is
     error ZeroAmount();
     error AlreadyBlocklisted(address account);
     error NotBlocklisted(address account);
-
-    // error CooldownNotExpired(uint256 remainingTime);
+    error UnauthorizedPauser();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -70,11 +65,12 @@ contract NEBAToken is
     }
 
     modifier onlyPausers() {
-        require(
-            hasRole(ADMIN_PAUSER_ROLE, msg.sender) ||
-                hasRole(BOT_PAUSER_ROLE, msg.sender),
-            "Caller must have ADMIN_PAUSER_ROLE or BOT_PAUSER_ROLE"
-        );
+        if (
+            !hasRole(ADMIN_PAUSER_ROLE, msg.sender) &&
+            !hasRole(BOT_PAUSER_ROLE, msg.sender)
+        ) {
+            revert UnauthorizedPauser();
+        }
         _;
     }
 
@@ -101,7 +97,7 @@ contract NEBAToken is
         __ERC20Pausable_init();
         __AccessControl_init();
         __ERC20Permit_init("NEBA Token");
-        __ERC20Votes_init();
+        // __ERC20Votes_init();
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
 
@@ -118,7 +114,7 @@ contract NEBAToken is
      * @notice Pauses token transfers by ADMIN_PAUSER_ROLE or BOT_PAUSER_ROLE
      * @dev Can only be called by ADMIN_PAUSER_ROLE and BOT_PAUSER_ROLE.
      */
-    function pause() public onlyPausers whenNotPaused {
+    function pause() external onlyPausers whenNotPaused {
         _pause();
         emit CircuitBreakerActivated(msg.sender, block.timestamp);
     }
@@ -127,7 +123,7 @@ contract NEBAToken is
      * @notice Unpauses token transfers by ADMIN_PAUSER_ROLE
      * @dev Can only be called by ADMIN_PAUSER_ROLE.
      */
-    function unpause() public onlyRole(ADMIN_PAUSER_ROLE) whenPaused {
+    function unpause() external onlyRole(ADMIN_PAUSER_ROLE) whenPaused {
         _unpause();
         emit CircuitBreakerDeactivated(msg.sender, block.timestamp);
     }
@@ -209,11 +205,8 @@ contract NEBAToken is
         uint256 amount
     )
         internal
-        override(
-            ERC20Upgradeable,
-            ERC20PausableUpgradeable,
-            ERC20VotesUpgradeable
-        )
+        override(ERC20Upgradeable, ERC20PausableUpgradeable)
+        // ERC20VotesUpgradeable
         whenNotPaused
     {
         if (amount == 0) revert ZeroAmount();
@@ -238,8 +231,11 @@ contract NEBAToken is
     )
         public
         view
-        override(ERC20PermitUpgradeable, NoncesUpgradeable)
-        returns (uint256)
+        override(ERC20PermitUpgradeable)
+        returns (
+            // override(ERC20PermitUpgradeable, NoncesUpgradeable)
+            uint256
+        )
     {
         return super.nonces(owner);
     }

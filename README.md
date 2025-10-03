@@ -193,7 +193,9 @@ forge test -vvv
 
 ## Test Coverage
 
-![Coverage Report](./coverage.png)
+[![codecov](https://codecov.io/gh/jayp11/neba-token/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/jayp11/neba-token)
+
+For full coverage details, see [audits/coverage.md](./audits/coverage.md)
 
 ## 🔧 Configuration
 
@@ -256,12 +258,3 @@ event AddressUnblocklisted(address indexed account, uint256 timestamp);
 event CircuitBreakerActivated(address indexed by, uint256 timestamp);
 event CircuitBreakerDeactivated(address indexed by, uint256 timestamp);
 ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request

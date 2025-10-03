@@ -14,6 +14,9 @@ contract NEBATokenTest is Test {
     address public upgraderAddress = makeAddr("upgraderAddress");
     address public botAddress = makeAddr("botAddress");
     address public zeroAddress = makeAddr("zeroAddress");
+    uint256 user1PrivateKey = 0xA11CE; // example key
+    address internal userX = vm.addr(user1PrivateKey);
+
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
     address public user3 = makeAddr("user3");
@@ -122,7 +125,7 @@ contract NEBATokenTest is Test {
     function test_revertWhen_pauseBy_nonPauser() public {
         vm.prank(user1);
         vm.expectRevert(
-            "Caller must have ADMIN_PAUSER_ROLE or BOT_PAUSER_ROLE"
+            abi.encodeWithSelector(NEBAToken.UnauthorizedPauser.selector)
         );
         nebaToken.pause();
     }
@@ -422,9 +425,36 @@ contract NEBATokenTest is Test {
         nebaToken.approve(user1, 100 * 10 ** 18);
     }
 
-    function test_Transfer_RevertIf_ZeroAmount() public {
+    function test_Transfer_Success() public {
         vm.prank(adminTreasury);
         vm.expectRevert(NEBAToken.ZeroAmount.selector);
         nebaToken.transfer(user1, 0);
+
+        uint256 beforeBalance = nebaToken.balanceOf(user1);
+
+        vm.prank(adminTreasury);
+        nebaToken.transfer(user1, 100 ether);
+
+        uint256 afterBalance = nebaToken.balanceOf(user1);
+        assertEq(afterBalance, beforeBalance + 100 ether);
+    }
+
+    function test_Approve_Success() public {
+        vm.prank(adminTreasury);
+        nebaToken.approve(user1, 100 * 10 ** 18);
+        assertEq(nebaToken.allowance(adminTreasury, user1), 100 * 10 ** 18);
+    }
+
+    function test_TransferFrom_Success() public {
+        vm.startPrank(adminTreasury);
+        nebaToken.transfer(user1, 1000 * 10 ** 18);
+        vm.stopPrank();
+
+        vm.prank(user1);
+        nebaToken.approve(user2, 500 * 10 ** 18);
+
+        vm.prank(user2);
+        nebaToken.transferFrom(user1, user3, 100 * 10 ** 18);
+        assertEq(nebaToken.balanceOf(user3), 100 * 10 ** 18);
     }
 }
