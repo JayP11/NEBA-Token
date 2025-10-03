@@ -212,6 +212,8 @@ libs = ["lib"]
 
 ### Dependencies
 
+Contracts use ^0.8.20 to remain forward-compatible with future compiler releases.
+
 - **OpenZeppelin Contracts**: v5.0+ (upgradeable versions)
 - **Forge Standard Library**: For testing utilities
 

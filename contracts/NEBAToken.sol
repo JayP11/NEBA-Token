@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -22,24 +21,20 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
  * - Role-based access control (Admin, Upgrader, Admin Pauser, Bot Pauser, Blocklist Manager)
  * - Pausable transfers for emergency controls
  * - EIP-2612 Permit for gasless approvals
- * - ERC20Votes for future governance
  * - Reentrancy protection
  */
-
 contract NEBAToken is
     ERC20Upgradeable,
     ERC20PausableUpgradeable,
     AccessControlUpgradeable,
     ERC20PermitUpgradeable,
-    // ERC20VotesUpgradeable,
     UUPSUpgradeable,
     ReentrancyGuardUpgradeable
 {
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant ADMIN_PAUSER_ROLE = keccak256("ADMIN_PAUSER_ROLE");
     bytes32 public constant BOT_PAUSER_ROLE = keccak256("BOT_PAUSER_ROLE");
-    bytes32 public constant BLOCKLIST_MANAGER_ROLE =
-        keccak256("BLOCKLIST_MANAGER_ROLE");
+    bytes32 public constant BLOCKLIST_MANAGER_ROLE = keccak256("BLOCKLIST_MANAGER_ROLE");
 
     uint256 public constant INITIAL_SUPPLY = 1_000_000_000 * 10 ** 18;
     mapping(address => bool) private _blocklist;
@@ -54,7 +49,6 @@ contract NEBAToken is
 
     error BlocklistedAddress(address account);
     error ZeroAddress();
-    error ZeroAmount();
     error AlreadyBlocklisted(address account);
     error NotBlocklisted(address account);
     error UnauthorizedPauser();
@@ -65,10 +59,7 @@ contract NEBAToken is
     }
 
     modifier onlyPausers() {
-        if (
-            !hasRole(ADMIN_PAUSER_ROLE, msg.sender) &&
-            !hasRole(BOT_PAUSER_ROLE, msg.sender)
-        ) {
+        if (!hasRole(ADMIN_PAUSER_ROLE, msg.sender) && !hasRole(BOT_PAUSER_ROLE, msg.sender)) {
             revert UnauthorizedPauser();
         }
         _;
@@ -86,18 +77,13 @@ contract NEBAToken is
      * @param botAddress Address for the automated keeper bot (can only pause).
      * @dev Mints entire supply to adminTreasury and sets up roles
      */
-    function initialize(
-        address adminTreasury,
-        address upgraderAddress,
-        address botAddress
-    ) public initializer {
+    function initialize(address adminTreasury, address upgraderAddress, address botAddress) public initializer {
         if (adminTreasury == address(0)) revert ZeroAddress();
 
         __ERC20_init("NEBA Token", "NEBA");
         __ERC20Pausable_init();
         __AccessControl_init();
         __ERC20Permit_init("NEBA Token");
-        // __ERC20Votes_init();
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
 
@@ -133,20 +119,16 @@ contract NEBAToken is
      * @param newImplementation Address of new implementation contract
      * @dev Restricted to UPGRADER_ROLE only
      */
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
 
     /**
      * @notice Adds multiple addresses to blocklist in batch and checks for zero address and already blocklisted addresses
      * @param accounts Array of addresses to blocklist
      * @dev Restricted to BLOCKLIST_MANAGER_ROLE only
      */
-    function addToBlocklistBatch(
-        address[] calldata accounts
-    ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
+    function addToBlocklistBatch(address[] calldata accounts) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
         uint256 length = accounts.length;
-        for (uint256 i = 0; i < length; ) {
+        for (uint256 i = 0; i < length;) {
             address account = accounts[i];
             if (account == address(0)) revert ZeroAddress();
             if (_blocklist[account]) revert AlreadyBlocklisted(account);
@@ -164,12 +146,10 @@ contract NEBAToken is
      * @notice Removes multiple addresses from blocklist in batch
      * @param accounts Array of addresses to remove from blocklist
      */
-    function removeFromBlocklistBatch(
-        address[] calldata accounts
-    ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
+    function removeFromBlocklistBatch(address[] calldata accounts) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
         uint256 length = accounts.length;
 
-        for (uint256 i = 0; i < length; ) {
+        for (uint256 i = 0; i < length;) {
             address account = accounts[i];
             if (account == address(0)) revert ZeroAddress();
             if (!_blocklist[account]) revert NotBlocklisted(account);
@@ -199,18 +179,11 @@ contract NEBAToken is
      * @param amount Amount to transfer
      * @dev Enforces pause state and blocklist checks
      */
-    function _update(
-        address from,
-        address to,
-        uint256 amount
-    )
+    function _update(address from, address to, uint256 amount)
         internal
         override(ERC20Upgradeable, ERC20PausableUpgradeable)
-        // ERC20VotesUpgradeable
         whenNotPaused
     {
-        if (amount == 0) revert ZeroAmount();
-
         if (from != address(0) && _blocklist[from]) {
             revert BlocklistedAddress(from);
         }
@@ -226,9 +199,7 @@ contract NEBAToken is
      * @param owner Address to get nonce for
      * @return uint256 Nonce for the address
      */
-    function nonces(
-        address owner
-    )
+    function nonces(address owner)
         public
         view
         override(ERC20PermitUpgradeable)
@@ -246,12 +217,12 @@ contract NEBAToken is
      * @param spender Address allowed to spend
      * @param value Amount approved
      */
-    function _approve(
-        address owner,
-        address spender,
-        uint256 value,
-        bool emitEvent
-    ) internal virtual override whenNotPaused {
+    function _approve(address owner, address spender, uint256 value, bool emitEvent)
+        internal
+        virtual
+        override
+        whenNotPaused
+    {
         if (_blocklist[owner]) revert BlocklistedAddress(owner);
         if (_blocklist[spender]) revert BlocklistedAddress(spender);
         super._approve(owner, spender, value, emitEvent);
