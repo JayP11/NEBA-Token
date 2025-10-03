@@ -191,9 +191,7 @@ forge test --match-test "test_pause"
 forge test -vvv
 ```
 
-## Test Coverage
-
-[![codecov](https://codecov.io/gh/jayp11/neba-token/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/jayp11/neba-token)
+[![codecov](https://codecov.io/gh/JayP11/NEBA-Token/graph/badge.svg?token=1RBCTQAIS2)](https://codecov.io/gh/JayP11/NEBA-Token)
 
 For full coverage details, see [audits/coverage.md](./audits/coverage.md)
 
