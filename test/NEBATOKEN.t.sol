@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
 import {NEBAToken} from "../contracts/NEBAToken.sol";
@@ -20,6 +20,9 @@ contract NEBATokenTest is Test {
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
     address public user3 = makeAddr("user3");
+
+    // address public user1Signer = makeAddr("user1Signer");
+    address public spender = makeAddr("spender");
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant ADMIN_PAUSER_ROLE = keccak256("ADMIN_PAUSER_ROLE");
@@ -456,5 +459,47 @@ contract NEBATokenTest is Test {
         vm.prank(user2);
         nebaToken.transferFrom(user1, user3, 100 * 10 ** 18);
         assertEq(nebaToken.balanceOf(user3), 100 * 10 ** 18);
+    }
+
+    function test_Permit_Success() public {
+        vm.prank(adminTreasury);
+        nebaToken.transfer(userX, 10000 * 10 ** 18);
+
+        uint256 amount = 1000 * 10 ** 18;
+        uint256 deadline = block.timestamp + 1 hours;
+
+        uint256 nonce = nebaToken.nonces(userX);
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                keccak256(
+                    "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
+                ),
+                userX,
+                spender,
+                amount,
+                nonce,
+                deadline
+            )
+        );
+
+        bytes32 domainSeparator = nebaToken.DOMAIN_SEPARATOR();
+        bytes32 digest = keccak256(
+            abi.encodePacked("\x19\x01", domainSeparator, structHash)
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(user1PrivateKey, digest);
+
+        assertEq(nebaToken.allowance(userX, spender), 0);
+        assertEq(nebaToken.nonces(userX), 0);
+
+        nebaToken.permit(userX, spender, amount, deadline, v, r, s);
+
+        assertEq(nebaToken.allowance(userX, spender), amount);
+        assertEq(nebaToken.nonces(userX), 1);
+
+        vm.prank(spender);
+        nebaToken.transferFrom(userX, spender, amount);
+        assertEq(nebaToken.balanceOf(spender), amount);
     }
 }
