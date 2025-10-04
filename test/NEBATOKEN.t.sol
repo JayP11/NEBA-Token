@@ -67,6 +67,21 @@ contract NEBATokenTest is Test {
         new ERC1967Proxy(address(newImpl), data);
     }
 
+    function test_revertWhen_initializeWithZeroUpgraderAddress() public {
+        NEBAToken newImpl = new NEBAToken();
+        bytes memory data = abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, address(0), botAddress);
+        vm.expectRevert(NEBAToken.ZeroAddress.selector);
+        new ERC1967Proxy(address(newImpl), data);
+    }
+
+    function test_revertWhen_initializeWithZeroBotAddress() public {
+        NEBAToken newImpl = new NEBAToken();
+        bytes memory data =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, address(0));
+        vm.expectRevert(NEBAToken.ZeroAddress.selector);
+        new ERC1967Proxy(address(newImpl), data);
+    }
+
     function test_Initialize_CannotReinitialize() public {
         vm.expectRevert();
         nebaToken.initialize(adminTreasury, upgraderAddress, botAddress);

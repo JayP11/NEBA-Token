@@ -79,6 +79,8 @@ contract NEBAToken is
      */
     function initialize(address adminTreasury, address upgraderAddress, address botAddress) public initializer {
         if (adminTreasury == address(0)) revert ZeroAddress();
+        if (upgraderAddress == address(0)) revert ZeroAddress();
+        if (botAddress == address(0)) revert ZeroAddress();
 
         __ERC20_init("NEBA Token", "NEBA");
         __ERC20Pausable_init();
