@@ -13,6 +13,7 @@ contract NEBATokenTest is Test {
     address public adminTreasury = makeAddr("adminTreasury");
     address public upgraderAddress = makeAddr("upgraderAddress");
     address public botAddress = makeAddr("botAddress");
+    address public investorAddress = makeAddr("investorAddress");
     address public zeroAddress = makeAddr("zeroAddress");
     uint256 user1PrivateKey = 0xA11CE; // example key
     address internal userX = vm.addr(user1PrivateKey);
@@ -27,10 +28,13 @@ contract NEBATokenTest is Test {
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant ADMIN_PAUSER_ROLE = keccak256("ADMIN_PAUSER_ROLE");
     bytes32 public constant BOT_PAUSER_ROLE = keccak256("BOT_PAUSER_ROLE");
-    bytes32 public constant BLOCKLIST_MANAGER_ROLE = keccak256("BLOCKLIST_MANAGER_ROLE");
+    bytes32 public constant BLOCKLIST_MANAGER_ROLE =
+        keccak256("BLOCKLIST_MANAGER_ROLE");
     bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
 
     uint256 public constant INITIAL_SUPPLY = 1_000_000_000 * 10 ** 18;
+    uint256 public constant INVESTOR_ALLOCATION = 600_000_000 * 10 ** 18;
+    uint256 public constant ADMIN_ALLOCATION = 400_000_000 * 10 ** 18;
 
     event AddressBlocklisted(address indexed account, uint256 timestamp);
     event AddressUnblocklisted(address indexed account, uint256 timestamp);
@@ -38,8 +42,13 @@ contract NEBATokenTest is Test {
     function setUp() public {
         implementation = new NEBAToken();
 
-        bytes memory data =
-            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, botAddress);
+        bytes memory data = abi.encodeWithSelector(
+            NEBAToken.initialize.selector,
+            adminTreasury,
+            upgraderAddress,
+            botAddress,
+            investorAddress
+        );
 
         proxy = new ERC1967Proxy(address(implementation), data);
         nebaToken = NEBAToken(address(proxy));
@@ -51,40 +60,78 @@ contract NEBATokenTest is Test {
         assertEq(nebaToken.decimals(), 18);
         assertEq(nebaToken.paused(), false);
         assertEq(nebaToken.totalSupply(), INITIAL_SUPPLY);
-        assertEq(nebaToken.balanceOf(adminTreasury), INITIAL_SUPPLY);
+        assertEq(nebaToken.balanceOf(adminTreasury), ADMIN_ALLOCATION);
+        assertEq(nebaToken.balanceOf(investorAddress), INVESTOR_ALLOCATION);
         assertEq(nebaToken.hasRole(DEFAULT_ADMIN_ROLE, adminTreasury), true);
         assertEq(nebaToken.hasRole(ADMIN_PAUSER_ROLE, adminTreasury), true);
         assertEq(nebaToken.hasRole(BOT_PAUSER_ROLE, botAddress), true);
         assertEq(nebaToken.hasRole(UPGRADER_ROLE, upgraderAddress), true);
-        assertEq(nebaToken.hasRole(BLOCKLIST_MANAGER_ROLE, adminTreasury), true);
+        assertEq(
+            nebaToken.hasRole(BLOCKLIST_MANAGER_ROLE, adminTreasury),
+            true
+        );
     }
 
     function test_revertWhen_initializeWithZeroAddress() public {
         NEBAToken newImpl = new NEBAToken();
-        bytes memory data =
-            abi.encodeWithSelector(NEBAToken.initialize.selector, address(0), upgraderAddress, botAddress);
+        bytes memory data = abi.encodeWithSelector(
+            NEBAToken.initialize.selector,
+            address(0),
+            upgraderAddress,
+            botAddress,
+            investorAddress
+        );
         vm.expectRevert(NEBAToken.ZeroAddress.selector);
         new ERC1967Proxy(address(newImpl), data);
     }
 
     function test_revertWhen_initializeWithZeroUpgraderAddress() public {
         NEBAToken newImpl = new NEBAToken();
-        bytes memory data = abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, address(0), botAddress);
+        bytes memory data = abi.encodeWithSelector(
+            NEBAToken.initialize.selector,
+            adminTreasury,
+            address(0),
+            botAddress,
+            investorAddress
+        );
         vm.expectRevert(NEBAToken.ZeroAddress.selector);
         new ERC1967Proxy(address(newImpl), data);
     }
 
     function test_revertWhen_initializeWithZeroBotAddress() public {
         NEBAToken newImpl = new NEBAToken();
-        bytes memory data =
-            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, address(0));
+        bytes memory data = abi.encodeWithSelector(
+            NEBAToken.initialize.selector,
+            adminTreasury,
+            upgraderAddress,
+            address(0),
+            investorAddress
+        );
+        vm.expectRevert(NEBAToken.ZeroAddress.selector);
+        new ERC1967Proxy(address(newImpl), data);
+    }
+
+    function test_revertWhen_initializeWithZeroInvestorAddress() public {
+        NEBAToken newImpl = new NEBAToken();
+        bytes memory data = abi.encodeWithSelector(
+            NEBAToken.initialize.selector,
+            adminTreasury,
+            upgraderAddress,
+            botAddress,
+            address(0)
+        );
         vm.expectRevert(NEBAToken.ZeroAddress.selector);
         new ERC1967Proxy(address(newImpl), data);
     }
 
     function test_Initialize_CannotReinitialize() public {
         vm.expectRevert();
-        nebaToken.initialize(adminTreasury, upgraderAddress, botAddress);
+        nebaToken.initialize(
+            adminTreasury,
+            upgraderAddress,
+            botAddress,
+            investorAddress
+        );
     }
 
     function test_RoleManagement_AdminCanGrantAndRevokeRoles() public {
@@ -130,7 +177,9 @@ contract NEBATokenTest is Test {
 
     function test_revertWhen_pauseBy_nonPauser() public {
         vm.prank(user1);
-        vm.expectRevert(abi.encodeWithSelector(NEBAToken.UnauthorizedPauser.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(NEBAToken.UnauthorizedPauser.selector)
+        );
         nebaToken.pause();
     }
 
@@ -239,7 +288,9 @@ contract NEBATokenTest is Test {
         nebaToken.addToBlocklistBatch(accounts);
 
         vm.prank(adminTreasury);
-        vm.expectRevert(abi.encodeWithSelector(NEBAToken.AlreadyBlocklisted.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(NEBAToken.AlreadyBlocklisted.selector, user1)
+        );
         nebaToken.addToBlocklistBatch(accounts);
     }
 
@@ -287,7 +338,9 @@ contract NEBATokenTest is Test {
         nebaToken.removeFromBlocklistBatch(accounts2);
     }
 
-    function test_RemoveFromBlocklistBatch_RevertWhen_AlreadyUnBlocklisted() public {
+    function test_RemoveFromBlocklistBatch_RevertWhen_AlreadyUnBlocklisted()
+        public
+    {
         address[] memory accounts = new address[](1);
         accounts[0] = user1;
 
@@ -298,7 +351,9 @@ contract NEBATokenTest is Test {
         nebaToken.removeFromBlocklistBatch(accounts);
 
         vm.prank(adminTreasury);
-        vm.expectRevert(abi.encodeWithSelector(NEBAToken.NotBlocklisted.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(NEBAToken.NotBlocklisted.selector, user1)
+        );
         nebaToken.removeFromBlocklistBatch(accounts);
     }
 
@@ -314,7 +369,9 @@ contract NEBATokenTest is Test {
         nebaToken.addToBlocklistBatch(accounts);
 
         vm.prank(user1);
-        vm.expectRevert(abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1)
+        );
         nebaToken.transfer(user2, 100 * 10 ** 18);
     }
 
@@ -325,7 +382,9 @@ contract NEBATokenTest is Test {
         nebaToken.addToBlocklistBatch(accounts);
 
         vm.prank(adminTreasury);
-        vm.expectRevert(abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1)
+        );
         nebaToken.transfer(user1, 100 * 10 ** 18);
     }
 
@@ -339,7 +398,9 @@ contract NEBATokenTest is Test {
         nebaToken.addToBlocklistBatch(accounts);
 
         vm.prank(user1);
-        vm.expectRevert(abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1)
+        );
         nebaToken.approve(user2, 100 * 10 ** 18);
     }
 
@@ -353,7 +414,9 @@ contract NEBATokenTest is Test {
         nebaToken.addToBlocklistBatch(accounts);
 
         vm.prank(user2);
-        vm.expectRevert(abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1)
+        );
         nebaToken.approve(user1, 100 * 10 ** 18);
     }
 
@@ -371,7 +434,9 @@ contract NEBATokenTest is Test {
         nebaToken.addToBlocklistBatch(accounts);
 
         vm.prank(user2);
-        vm.expectRevert(abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1));
+        vm.expectRevert(
+            abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user1)
+        );
         nebaToken.transferFrom(user1, user2, 100 * 10 ** 18);
     }
 
@@ -389,7 +454,9 @@ contract NEBATokenTest is Test {
         nebaToken.addToBlocklistBatch(accounts);
 
         vm.prank(user2);
-        vm.expectRevert(abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user2));
+        vm.expectRevert(
+            abi.encodeWithSelector(NEBAToken.BlocklistedAddress.selector, user2)
+        );
         nebaToken.transferFrom(user1, user2, 100 * 10 ** 18);
     }
 
@@ -451,7 +518,9 @@ contract NEBATokenTest is Test {
 
         bytes32 structHash = keccak256(
             abi.encode(
-                keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"),
+                keccak256(
+                    "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
+                ),
                 userX,
                 spender,
                 amount,
@@ -461,7 +530,9 @@ contract NEBATokenTest is Test {
         );
 
         bytes32 domainSeparator = nebaToken.DOMAIN_SEPARATOR();
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        bytes32 digest = keccak256(
+            abi.encodePacked("\x19\x01", domainSeparator, structHash)
+        );
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(user1PrivateKey, digest);
 

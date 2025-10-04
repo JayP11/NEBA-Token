@@ -22,6 +22,12 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
  * - Pausable transfers for emergency controls
  * - EIP-2612 Permit for gasless approvals
  * - Reentrancy protection
+ * - On-chain token distribution (60% Investors / 40% Admin)
+ *
+ * - ADMIN_PAUSER_ROLE can pause and unpause the token and grant roles to other addresses
+ * - BOT_PAUSER_ROLE can pause the token for bots
+ * - UPGRADER_ROLE can upgrade the contract
+ * - BLOCKLIST_MANAGER_ROLE can add and remove addresses from the blocklist
  */
 contract NEBAToken is
     ERC20Upgradeable,
@@ -34,9 +40,13 @@ contract NEBAToken is
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant ADMIN_PAUSER_ROLE = keccak256("ADMIN_PAUSER_ROLE");
     bytes32 public constant BOT_PAUSER_ROLE = keccak256("BOT_PAUSER_ROLE");
-    bytes32 public constant BLOCKLIST_MANAGER_ROLE = keccak256("BLOCKLIST_MANAGER_ROLE");
+    bytes32 public constant BLOCKLIST_MANAGER_ROLE =
+        keccak256("BLOCKLIST_MANAGER_ROLE");
 
     uint256 public constant INITIAL_SUPPLY = 1_000_000_000 * 10 ** 18;
+    uint256 public constant INVESTOR_ALLOCATION = 600_000_000 * 10 ** 18; // 60%
+    uint256 public constant ADMIN_ALLOCATION = 400_000_000 * 10 ** 18; // 40%
+
     mapping(address => bool) private _blocklist;
 
     // Storage gap for safe upgrades
@@ -46,6 +56,11 @@ contract NEBAToken is
     event AddressUnblocklisted(address indexed account, uint256 timestamp);
     event CircuitBreakerActivated(address indexed by, uint256 timestamp);
     event CircuitBreakerDeactivated(address indexed by, uint256 timestamp);
+    event TokensDistributed(
+        address indexed investor,
+        uint256 amount,
+        uint256 timestamp
+    );
 
     error BlocklistedAddress(address account);
     error ZeroAddress();
@@ -59,14 +74,17 @@ contract NEBAToken is
     }
 
     modifier onlyPausers() {
-        if (!hasRole(ADMIN_PAUSER_ROLE, msg.sender) && !hasRole(BOT_PAUSER_ROLE, msg.sender)) {
+        if (
+            !hasRole(ADMIN_PAUSER_ROLE, msg.sender) &&
+            !hasRole(BOT_PAUSER_ROLE, msg.sender)
+        ) {
             revert UnauthorizedPauser();
         }
         _;
     }
 
     /**
-     * @notice Initializes the NEBA Token contract and grants roles to the adminTreasury
+     * @notice Initializes the NEBA Token contract and distributes tokens
      * DEFAULT_ADMIN_ROLE has all permissions and it can grant and revoke roles
      * ADMIN_PAUSER_ROLE and BOT_PAUSER_ROLE have the ability to pause and unpause the token
      * BOT_PAUSER_ROLE has the ability to pause the token for bots
@@ -75,12 +93,19 @@ contract NEBAToken is
      * @param adminTreasury Address for day-to-day management (admin, pauser, blocklist).
      * @param upgraderAddress Address that can upgrade the contract (should be a separate, high-security multisig/wallet).
      * @param botAddress Address for the automated keeper bot (can only pause).
-     * @dev Mints entire supply to adminTreasury and sets up roles
+     * @param investorAddress Address for investor allocation (receives 60% of supply)
+     * @dev Mints and distributes supply: 60% to investors, 40% to admin
      */
-    function initialize(address adminTreasury, address upgraderAddress, address botAddress) public initializer {
+    function initialize(
+        address adminTreasury,
+        address upgraderAddress,
+        address botAddress,
+        address investorAddress
+    ) public initializer {
         if (adminTreasury == address(0)) revert ZeroAddress();
         if (upgraderAddress == address(0)) revert ZeroAddress();
         if (botAddress == address(0)) revert ZeroAddress();
+        if (investorAddress == address(0)) revert ZeroAddress();
 
         __ERC20_init("NEBA Token", "NEBA");
         __ERC20Pausable_init();
@@ -95,7 +120,19 @@ contract NEBAToken is
         _grantRole(UPGRADER_ROLE, upgraderAddress);
         _grantRole(BLOCKLIST_MANAGER_ROLE, adminTreasury);
 
-        _mint(adminTreasury, INITIAL_SUPPLY);
+        _mint(investorAddress, INVESTOR_ALLOCATION);
+        emit TokensDistributed(
+            investorAddress,
+            INVESTOR_ALLOCATION,
+            block.timestamp
+        );
+
+        _mint(adminTreasury, ADMIN_ALLOCATION);
+        emit TokensDistributed(
+            adminTreasury,
+            ADMIN_ALLOCATION,
+            block.timestamp
+        );
     }
 
     /**
@@ -121,16 +158,20 @@ contract NEBAToken is
      * @param newImplementation Address of new implementation contract
      * @dev Restricted to UPGRADER_ROLE only
      */
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     /**
      * @notice Adds multiple addresses to blocklist in batch and checks for zero address and already blocklisted addresses
      * @param accounts Array of addresses to blocklist
      * @dev Restricted to BLOCKLIST_MANAGER_ROLE only
      */
-    function addToBlocklistBatch(address[] calldata accounts) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
+    function addToBlocklistBatch(
+        address[] calldata accounts
+    ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
         uint256 length = accounts.length;
-        for (uint256 i = 0; i < length;) {
+        for (uint256 i = 0; i < length; ) {
             address account = accounts[i];
             if (account == address(0)) revert ZeroAddress();
             if (_blocklist[account]) revert AlreadyBlocklisted(account);
@@ -148,10 +189,12 @@ contract NEBAToken is
      * @notice Removes multiple addresses from blocklist in batch
      * @param accounts Array of addresses to remove from blocklist
      */
-    function removeFromBlocklistBatch(address[] calldata accounts) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
+    function removeFromBlocklistBatch(
+        address[] calldata accounts
+    ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {
         uint256 length = accounts.length;
 
-        for (uint256 i = 0; i < length;) {
+        for (uint256 i = 0; i < length; ) {
             address account = accounts[i];
             if (account == address(0)) revert ZeroAddress();
             if (!_blocklist[account]) revert NotBlocklisted(account);
@@ -181,7 +224,11 @@ contract NEBAToken is
      * @param amount Amount to transfer
      * @dev Enforces pause state and blocklist checks
      */
-    function _update(address from, address to, uint256 amount)
+    function _update(
+        address from,
+        address to,
+        uint256 amount
+    )
         internal
         override(ERC20Upgradeable, ERC20PausableUpgradeable)
         whenNotPaused
@@ -201,15 +248,9 @@ contract NEBAToken is
      * @param owner Address to get nonce for
      * @return uint256 Nonce for the address
      */
-    function nonces(address owner)
-        public
-        view
-        override(ERC20PermitUpgradeable)
-        returns (
-            // override(ERC20PermitUpgradeable, NoncesUpgradeable)
-            uint256
-        )
-    {
+    function nonces(
+        address owner
+    ) public view override(ERC20PermitUpgradeable) returns (uint256) {
         return super.nonces(owner);
     }
 
@@ -219,12 +260,12 @@ contract NEBAToken is
      * @param spender Address allowed to spend
      * @param value Amount approved
      */
-    function _approve(address owner, address spender, uint256 value, bool emitEvent)
-        internal
-        virtual
-        override
-        whenNotPaused
-    {
+    function _approve(
+        address owner,
+        address spender,
+        uint256 value,
+        bool emitEvent
+    ) internal virtual override whenNotPaused {
         if (_blocklist[owner]) revert BlocklistedAddress(owner);
         if (_blocklist[spender]) revert BlocklistedAddress(spender);
         super._approve(owner, spender, value, emitEvent);

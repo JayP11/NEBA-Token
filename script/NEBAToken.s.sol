@@ -38,12 +38,8 @@ contract DeployNEBAToken is Script {
         implementation = new NEBAToken();
         console.log("Implementation deployed at:", address(implementation));
 
-        bytes memory initData = abi.encodeWithSelector(
-            NEBAToken.initialize.selector,
-            adminTreasury,
-            upgraderAddress,
-            botAddress
-        );
+        bytes memory initData =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, botAddress);
 
         proxy = new ERC1967Proxy(address(implementation), initData);
         console.log("Proxy deployed at:", address(proxy));
@@ -52,10 +48,7 @@ contract DeployNEBAToken is Script {
         console.log("Token name:", nebaToken.name());
         console.log("Token symbol:", nebaToken.symbol());
         console.log("Total supply:", nebaToken.totalSupply());
-        console.log(
-            "Admin Treasury balance:",
-            nebaToken.balanceOf(adminTreasury)
-        );
+        console.log("Admin Treasury balance:", nebaToken.balanceOf(adminTreasury));
 
         bytes32 DEFAULT_ADMIN_ROLE = 0x00;
         bytes32 ADMIN_PAUSER_ROLE = nebaToken.ADMIN_PAUSER_ROLE();
@@ -64,26 +57,11 @@ contract DeployNEBAToken is Script {
         bytes32 BLOCKLIST_MANAGER_ROLE = nebaToken.BLOCKLIST_MANAGER_ROLE();
 
         console.log("\n=== Role Verification ===");
-        console.log(
-            "Admin has DEFAULT_ADMIN_ROLE:",
-            nebaToken.hasRole(DEFAULT_ADMIN_ROLE, adminTreasury)
-        );
-        console.log(
-            "Admin has ADMIN_PAUSER_ROLE:",
-            nebaToken.hasRole(ADMIN_PAUSER_ROLE, adminTreasury)
-        );
-        console.log(
-            "Admin has BLOCKLIST_MANAGER_ROLE:",
-            nebaToken.hasRole(BLOCKLIST_MANAGER_ROLE, adminTreasury)
-        );
-        console.log(
-            "Bot has BOT_PAUSER_ROLE:",
-            nebaToken.hasRole(BOT_PAUSER_ROLE, botAddress)
-        );
-        console.log(
-            "Upgrader has UPGRADER_ROLE:",
-            nebaToken.hasRole(UPGRADER_ROLE, upgraderAddress)
-        );
+        console.log("Admin has DEFAULT_ADMIN_ROLE:", nebaToken.hasRole(DEFAULT_ADMIN_ROLE, adminTreasury));
+        console.log("Admin has ADMIN_PAUSER_ROLE:", nebaToken.hasRole(ADMIN_PAUSER_ROLE, adminTreasury));
+        console.log("Admin has BLOCKLIST_MANAGER_ROLE:", nebaToken.hasRole(BLOCKLIST_MANAGER_ROLE, adminTreasury));
+        console.log("Bot has BOT_PAUSER_ROLE:", nebaToken.hasRole(BOT_PAUSER_ROLE, botAddress));
+        console.log("Upgrader has UPGRADER_ROLE:", nebaToken.hasRole(UPGRADER_ROLE, upgraderAddress));
 
         vm.stopBroadcast();
 

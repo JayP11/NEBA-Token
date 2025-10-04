@@ -1,0 +1,349 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info - contracts/NEBAToken.sol</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="title">LCOV - code coverage report</td></tr>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+            <tr>
+              <td width="100%">
+                <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="10%" class="headerValue"><a href="../index.html" title="Click to go to top-level">top level</a> - <a href="index.html" title="Click to go to directory contracts">contracts</a> - NEBAToken.sol<span style="font-size: 80%;"> (source / <a href="NEBAToken.sol.func-c.html" title="Click to go to function table">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="5%"></td>
+            <td width="5%" class="headerCovTableHead">Coverage</td>
+            <td width="5%" class="headerCovTableHead" title="Covered + Uncovered code">Total</td>
+            <td width="5%" class="headerCovTableHead" title="Exercised code only">Hit</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">66</td>
+            <td class="headerCovTableEntry">66</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test Date:</td>
+            <td class="headerValue">2025-10-04 21:24:03</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntryHi">100.0&nbsp;%</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntry">12</td>
+          </tr>
+                  <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+          </table>
+
+          <table cellpadding=0 cellspacing=0 border=0>
+            <tr>
+              <td><br></td>
+            </tr>
+            <tr>
+              <td>
+<pre class="sourceHeading">            Line data    Source code</pre>
+<pre class="source">
+<span id="L1"><span class="lineNum">       1</span>              : // SPDX-License-Identifier: MIT</span>
+<span id="L2"><span class="lineNum">       2</span>              : pragma solidity ^0.8.20;</span>
+<span id="L3"><span class="lineNum">       3</span>              : </span>
+<span id="L4"><span class="lineNum">       4</span>              : import &quot;@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol&quot;;</span>
+<span id="L5"><span class="lineNum">       5</span>              : import &quot;@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol&quot;;</span>
+<span id="L6"><span class="lineNum">       6</span>              : import &quot;@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol&quot;;</span>
+<span id="L7"><span class="lineNum">       7</span>              : import &quot;@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol&quot;;</span>
+<span id="L8"><span class="lineNum">       8</span>              : import &quot;@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol&quot;;</span>
+<span id="L9"><span class="lineNum">       9</span>              : import &quot;@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol&quot;;</span>
+<span id="L10"><span class="lineNum">      10</span>              : </span>
+<span id="L11"><span class="lineNum">      11</span>              : /**</span>
+<span id="L12"><span class="lineNum">      12</span>              :  * @title NEBAToken</span>
+<span id="L13"><span class="lineNum">      13</span>              :  * @author NEBA Team</span>
+<span id="L14"><span class="lineNum">      14</span>              :  * @notice ERC-20 token with pausable transfers, permit functionality,</span>
+<span id="L15"><span class="lineNum">      15</span>              :  *         blocklist management, and UUPS upgradeability</span>
+<span id="L16"><span class="lineNum">      16</span>              :  * @dev Phase 1 implementation with hardened security and compliance features</span>
+<span id="L17"><span class="lineNum">      17</span>              :  *</span>
+<span id="L18"><span class="lineNum">      18</span>              :  * Key Features:</span>
+<span id="L19"><span class="lineNum">      19</span>              :  * - Fixed supply of 1 billion tokens</span>
+<span id="L20"><span class="lineNum">      20</span>              :  * - UUPS upgradeable proxy pattern</span>
+<span id="L21"><span class="lineNum">      21</span>              :  * - Role-based access control (Admin, Upgrader, Admin Pauser, Bot Pauser, Blocklist Manager)</span>
+<span id="L22"><span class="lineNum">      22</span>              :  * - Pausable transfers for emergency controls</span>
+<span id="L23"><span class="lineNum">      23</span>              :  * - EIP-2612 Permit for gasless approvals</span>
+<span id="L24"><span class="lineNum">      24</span>              :  * - Reentrancy protection</span>
+<span id="L25"><span class="lineNum">      25</span>              :  * - On-chain token distribution (60% Investors / 40% Admin)</span>
+<span id="L26"><span class="lineNum">      26</span>              :  *</span>
+<span id="L27"><span class="lineNum">      27</span>              :  * - ADMIN_PAUSER_ROLE can pause and unpause the token and grant roles to other addresses</span>
+<span id="L28"><span class="lineNum">      28</span>              :  * - BOT_PAUSER_ROLE can pause the token for bots</span>
+<span id="L29"><span class="lineNum">      29</span>              :  * - UPGRADER_ROLE can upgrade the contract</span>
+<span id="L30"><span class="lineNum">      30</span>              :  * - BLOCKLIST_MANAGER_ROLE can add and remove addresses from the blocklist</span>
+<span id="L31"><span class="lineNum">      31</span>              :  */</span>
+<span id="L32"><span class="lineNum">      32</span>              : contract NEBAToken is</span>
+<span id="L33"><span class="lineNum">      33</span>              :     ERC20Upgradeable,</span>
+<span id="L34"><span class="lineNum">      34</span>              :     ERC20PausableUpgradeable,</span>
+<span id="L35"><span class="lineNum">      35</span>              :     AccessControlUpgradeable,</span>
+<span id="L36"><span class="lineNum">      36</span>              :     ERC20PermitUpgradeable,</span>
+<span id="L37"><span class="lineNum">      37</span>              :     UUPSUpgradeable,</span>
+<span id="L38"><span class="lineNum">      38</span>              :     ReentrancyGuardUpgradeable</span>
+<span id="L39"><span class="lineNum">      39</span>              : {</span>
+<span id="L40"><span class="lineNum">      40</span>              :     bytes32 public constant UPGRADER_ROLE = keccak256(&quot;UPGRADER_ROLE&quot;);</span>
+<span id="L41"><span class="lineNum">      41</span>              :     bytes32 public constant ADMIN_PAUSER_ROLE = keccak256(&quot;ADMIN_PAUSER_ROLE&quot;);</span>
+<span id="L42"><span class="lineNum">      42</span>              :     bytes32 public constant BOT_PAUSER_ROLE = keccak256(&quot;BOT_PAUSER_ROLE&quot;);</span>
+<span id="L43"><span class="lineNum">      43</span>              :     bytes32 public constant BLOCKLIST_MANAGER_ROLE =</span>
+<span id="L44"><span class="lineNum">      44</span>              :         keccak256(&quot;BLOCKLIST_MANAGER_ROLE&quot;);</span>
+<span id="L45"><span class="lineNum">      45</span>              : </span>
+<span id="L46"><span class="lineNum">      46</span>              :     uint256 public constant INITIAL_SUPPLY = 1_000_000_000 * 10 ** 18;</span>
+<span id="L47"><span class="lineNum">      47</span>              :     uint256 public constant INVESTOR_ALLOCATION = 600_000_000 * 10 ** 18; // 60%</span>
+<span id="L48"><span class="lineNum">      48</span>              :     uint256 public constant ADMIN_ALLOCATION = 400_000_000 * 10 ** 18; // 40%</span>
+<span id="L49"><span class="lineNum">      49</span>              : </span>
+<span id="L50"><span class="lineNum">      50</span>              :     mapping(address =&gt; bool) private _blocklist;</span>
+<span id="L51"><span class="lineNum">      51</span>              : </span>
+<span id="L52"><span class="lineNum">      52</span>              :     // Storage gap for safe upgrades</span>
+<span id="L53"><span class="lineNum">      53</span>              :     uint256[48] private __gap;</span>
+<span id="L54"><span class="lineNum">      54</span>              : </span>
+<span id="L55"><span class="lineNum">      55</span>              :     event AddressBlocklisted(address indexed account, uint256 timestamp);</span>
+<span id="L56"><span class="lineNum">      56</span>              :     event AddressUnblocklisted(address indexed account, uint256 timestamp);</span>
+<span id="L57"><span class="lineNum">      57</span>              :     event CircuitBreakerActivated(address indexed by, uint256 timestamp);</span>
+<span id="L58"><span class="lineNum">      58</span>              :     event CircuitBreakerDeactivated(address indexed by, uint256 timestamp);</span>
+<span id="L59"><span class="lineNum">      59</span>              :     event TokensDistributed(</span>
+<span id="L60"><span class="lineNum">      60</span>              :         address indexed investor,</span>
+<span id="L61"><span class="lineNum">      61</span>              :         uint256 amount,</span>
+<span id="L62"><span class="lineNum">      62</span>              :         uint256 timestamp</span>
+<span id="L63"><span class="lineNum">      63</span>              :     );</span>
+<span id="L64"><span class="lineNum">      64</span>              : </span>
+<span id="L65"><span class="lineNum">      65</span>              :     error BlocklistedAddress(address account);</span>
+<span id="L66"><span class="lineNum">      66</span>              :     error ZeroAddress();</span>
+<span id="L67"><span class="lineNum">      67</span>              :     error AlreadyBlocklisted(address account);</span>
+<span id="L68"><span class="lineNum">      68</span>              :     error NotBlocklisted(address account);</span>
+<span id="L69"><span class="lineNum">      69</span>              :     error UnauthorizedPauser();</span>
+<span id="L70"><span class="lineNum">      70</span>              : </span>
+<span id="L71"><span class="lineNum">      71</span>              :     /// @custom:oz-upgrades-unsafe-allow constructor</span>
+<span id="L72"><span class="lineNum">      72</span> <span class="tlaGNC">          70 :     constructor() {</span></span>
+<span id="L73"><span class="lineNum">      73</span> <span class="tlaGNC">          70 :         _disableInitializers();</span></span>
+<span id="L74"><span class="lineNum">      74</span>              :     }</span>
+<span id="L75"><span class="lineNum">      75</span>              : </span>
+<span id="L76"><span class="lineNum">      76</span> <span class="tlaGNC">        1568 :     modifier onlyPausers() {</span></span>
+<span id="L77"><span class="lineNum">      77</span>              :         if (</span>
+<span id="L78"><span class="lineNum">      78</span> <span class="tlaGNC">        1568 :             !hasRole(ADMIN_PAUSER_ROLE, msg.sender) &amp;&amp;</span></span>
+<span id="L79"><span class="lineNum">      79</span> <span class="tlaGNC">         523 :             !hasRole(BOT_PAUSER_ROLE, msg.sender)</span></span>
+<span id="L80"><span class="lineNum">      80</span> <span class="tlaGNC">         260 :         ) {</span></span>
+<span id="L81"><span class="lineNum">      81</span> <span class="tlaGNC">         260 :             revert UnauthorizedPauser();</span></span>
+<span id="L82"><span class="lineNum">      82</span>              :         }</span>
+<span id="L83"><span class="lineNum">      83</span>              :         _;</span>
+<span id="L84"><span class="lineNum">      84</span>              :     }</span>
+<span id="L85"><span class="lineNum">      85</span>              : </span>
+<span id="L86"><span class="lineNum">      86</span>              :     /**</span>
+<span id="L87"><span class="lineNum">      87</span>              :      * @notice Initializes the NEBA Token contract and distributes tokens</span>
+<span id="L88"><span class="lineNum">      88</span>              :      * DEFAULT_ADMIN_ROLE has all permissions and it can grant and revoke roles</span>
+<span id="L89"><span class="lineNum">      89</span>              :      * ADMIN_PAUSER_ROLE and BOT_PAUSER_ROLE have the ability to pause and unpause the token</span>
+<span id="L90"><span class="lineNum">      90</span>              :      * BOT_PAUSER_ROLE has the ability to pause the token for bots</span>
+<span id="L91"><span class="lineNum">      91</span>              :      * UPGRADER_ROLE has the ability to upgrade the contract</span>
+<span id="L92"><span class="lineNum">      92</span>              :      * BLOCKLIST_MANAGER_ROLE has the ability to add and remove addresses from the blocklist</span>
+<span id="L93"><span class="lineNum">      93</span>              :      * @param adminTreasury Address for day-to-day management (admin, pauser, blocklist).</span>
+<span id="L94"><span class="lineNum">      94</span>              :      * @param upgraderAddress Address that can upgrade the contract (should be a separate, high-security multisig/wallet).</span>
+<span id="L95"><span class="lineNum">      95</span>              :      * @param botAddress Address for the automated keeper bot (can only pause).</span>
+<span id="L96"><span class="lineNum">      96</span>              :      * @param investorAddress Address for investor allocation (receives 60% of supply)</span>
+<span id="L97"><span class="lineNum">      97</span>              :      * @dev Mints and distributes supply: 60% to investors, 40% to admin</span>
+<span id="L98"><span class="lineNum">      98</span>              :      */</span>
+<span id="L99"><span class="lineNum">      99</span> <span class="tlaGNC">          69 :     function initialize(</span></span>
+<span id="L100"><span class="lineNum">     100</span>              :         address adminTreasury,</span>
+<span id="L101"><span class="lineNum">     101</span>              :         address upgraderAddress,</span>
+<span id="L102"><span class="lineNum">     102</span>              :         address botAddress,</span>
+<span id="L103"><span class="lineNum">     103</span>              :         address investorAddress</span>
+<span id="L104"><span class="lineNum">     104</span>              :     ) public initializer {</span>
+<span id="L105"><span class="lineNum">     105</span> <span class="tlaGNC">          68 :         if (adminTreasury == address(0)) revert ZeroAddress();</span></span>
+<span id="L106"><span class="lineNum">     106</span> <span class="tlaGNC">          67 :         if (upgraderAddress == address(0)) revert ZeroAddress();</span></span>
+<span id="L107"><span class="lineNum">     107</span> <span class="tlaGNC">          66 :         if (botAddress == address(0)) revert ZeroAddress();</span></span>
+<span id="L108"><span class="lineNum">     108</span> <span class="tlaGNC">          65 :         if (investorAddress == address(0)) revert ZeroAddress();</span></span>
+<span id="L109"><span class="lineNum">     109</span>              : </span>
+<span id="L110"><span class="lineNum">     110</span> <span class="tlaGNC">          65 :         __ERC20_init(&quot;NEBA Token&quot;, &quot;NEBA&quot;);</span></span>
+<span id="L111"><span class="lineNum">     111</span> <span class="tlaGNC">          65 :         __ERC20Pausable_init();</span></span>
+<span id="L112"><span class="lineNum">     112</span> <span class="tlaGNC">          65 :         __AccessControl_init();</span></span>
+<span id="L113"><span class="lineNum">     113</span> <span class="tlaGNC">          65 :         __ERC20Permit_init(&quot;NEBA Token&quot;);</span></span>
+<span id="L114"><span class="lineNum">     114</span> <span class="tlaGNC">          65 :         __UUPSUpgradeable_init();</span></span>
+<span id="L115"><span class="lineNum">     115</span> <span class="tlaGNC">          65 :         __ReentrancyGuard_init();</span></span>
+<span id="L116"><span class="lineNum">     116</span>              : </span>
+<span id="L117"><span class="lineNum">     117</span> <span class="tlaGNC">          65 :         _grantRole(DEFAULT_ADMIN_ROLE, adminTreasury);</span></span>
+<span id="L118"><span class="lineNum">     118</span> <span class="tlaGNC">          65 :         _grantRole(ADMIN_PAUSER_ROLE, adminTreasury);</span></span>
+<span id="L119"><span class="lineNum">     119</span> <span class="tlaGNC">          65 :         _grantRole(BOT_PAUSER_ROLE, botAddress);</span></span>
+<span id="L120"><span class="lineNum">     120</span> <span class="tlaGNC">          65 :         _grantRole(UPGRADER_ROLE, upgraderAddress);</span></span>
+<span id="L121"><span class="lineNum">     121</span> <span class="tlaGNC">          65 :         _grantRole(BLOCKLIST_MANAGER_ROLE, adminTreasury);</span></span>
+<span id="L122"><span class="lineNum">     122</span>              : </span>
+<span id="L123"><span class="lineNum">     123</span> <span class="tlaGNC">          65 :         _mint(investorAddress, INVESTOR_ALLOCATION);</span></span>
+<span id="L124"><span class="lineNum">     124</span> <span class="tlaGNC">          65 :         emit TokensDistributed(</span></span>
+<span id="L125"><span class="lineNum">     125</span>              :             investorAddress,</span>
+<span id="L126"><span class="lineNum">     126</span>              :             INVESTOR_ALLOCATION,</span>
+<span id="L127"><span class="lineNum">     127</span>              :             block.timestamp</span>
+<span id="L128"><span class="lineNum">     128</span>              :         );</span>
+<span id="L129"><span class="lineNum">     129</span>              : </span>
+<span id="L130"><span class="lineNum">     130</span> <span class="tlaGNC">          65 :         _mint(adminTreasury, ADMIN_ALLOCATION);</span></span>
+<span id="L131"><span class="lineNum">     131</span> <span class="tlaGNC">          65 :         emit TokensDistributed(</span></span>
+<span id="L132"><span class="lineNum">     132</span>              :             adminTreasury,</span>
+<span id="L133"><span class="lineNum">     133</span>              :             ADMIN_ALLOCATION,</span>
+<span id="L134"><span class="lineNum">     134</span>              :             block.timestamp</span>
+<span id="L135"><span class="lineNum">     135</span>              :         );</span>
+<span id="L136"><span class="lineNum">     136</span>              :     }</span>
+<span id="L137"><span class="lineNum">     137</span>              : </span>
+<span id="L138"><span class="lineNum">     138</span>              :     /**</span>
+<span id="L139"><span class="lineNum">     139</span>              :      * @notice Pauses token transfers by ADMIN_PAUSER_ROLE or BOT_PAUSER_ROLE</span>
+<span id="L140"><span class="lineNum">     140</span>              :      * @dev Can only be called by ADMIN_PAUSER_ROLE and BOT_PAUSER_ROLE.</span>
+<span id="L141"><span class="lineNum">     141</span>              :      */</span>
+<span id="L142"><span class="lineNum">     142</span> <span class="tlaGNC">        1568 :     function pause() external onlyPausers whenNotPaused {</span></span>
+<span id="L143"><span class="lineNum">     143</span> <span class="tlaGNC">        1307 :         _pause();</span></span>
+<span id="L144"><span class="lineNum">     144</span> <span class="tlaGNC">        1307 :         emit CircuitBreakerActivated(msg.sender, block.timestamp);</span></span>
+<span id="L145"><span class="lineNum">     145</span>              :     }</span>
+<span id="L146"><span class="lineNum">     146</span>              : </span>
+<span id="L147"><span class="lineNum">     147</span>              :     /**</span>
+<span id="L148"><span class="lineNum">     148</span>              :      * @notice Unpauses token transfers by ADMIN_PAUSER_ROLE</span>
+<span id="L149"><span class="lineNum">     149</span>              :      * @dev Can only be called by ADMIN_PAUSER_ROLE.</span>
+<span id="L150"><span class="lineNum">     150</span>              :      */</span>
+<span id="L151"><span class="lineNum">     151</span> <span class="tlaGNC">         267 :     function unpause() external onlyRole(ADMIN_PAUSER_ROLE) whenPaused {</span></span>
+<span id="L152"><span class="lineNum">     152</span> <span class="tlaGNC">         263 :         _unpause();</span></span>
+<span id="L153"><span class="lineNum">     153</span> <span class="tlaGNC">         263 :         emit CircuitBreakerDeactivated(msg.sender, block.timestamp);</span></span>
+<span id="L154"><span class="lineNum">     154</span>              :     }</span>
+<span id="L155"><span class="lineNum">     155</span>              : </span>
+<span id="L156"><span class="lineNum">     156</span>              :     /**</span>
+<span id="L157"><span class="lineNum">     157</span>              :      * @notice Authorizes contract upgrades</span>
+<span id="L158"><span class="lineNum">     158</span>              :      * @param newImplementation Address of new implementation contract</span>
+<span id="L159"><span class="lineNum">     159</span>              :      * @dev Restricted to UPGRADER_ROLE only</span>
+<span id="L160"><span class="lineNum">     160</span>              :      */</span>
+<span id="L161"><span class="lineNum">     161</span> <span class="tlaGNC">           3 :     function _authorizeUpgrade(</span></span>
+<span id="L162"><span class="lineNum">     162</span>              :         address newImplementation</span>
+<span id="L163"><span class="lineNum">     163</span>              :     ) internal override onlyRole(UPGRADER_ROLE) {}</span>
+<span id="L164"><span class="lineNum">     164</span>              : </span>
+<span id="L165"><span class="lineNum">     165</span>              :     /**</span>
+<span id="L166"><span class="lineNum">     166</span>              :      * @notice Adds multiple addresses to blocklist in batch and checks for zero address and already blocklisted addresses</span>
+<span id="L167"><span class="lineNum">     167</span>              :      * @param accounts Array of addresses to blocklist</span>
+<span id="L168"><span class="lineNum">     168</span>              :      * @dev Restricted to BLOCKLIST_MANAGER_ROLE only</span>
+<span id="L169"><span class="lineNum">     169</span>              :      */</span>
+<span id="L170"><span class="lineNum">     170</span> <span class="tlaGNC">        1565 :     function addToBlocklistBatch(</span></span>
+<span id="L171"><span class="lineNum">     171</span>              :         address[] calldata accounts</span>
+<span id="L172"><span class="lineNum">     172</span>              :     ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {</span>
+<span id="L173"><span class="lineNum">     173</span> <span class="tlaGNC">        1563 :         uint256 length = accounts.length;</span></span>
+<span id="L174"><span class="lineNum">     174</span> <span class="tlaGNC">        1563 :         for (uint256 i = 0; i &lt; length; ) {</span></span>
+<span id="L175"><span class="lineNum">     175</span> <span class="tlaGNC">       14299 :             address account = accounts[i];</span></span>
+<span id="L176"><span class="lineNum">     176</span> <span class="tlaGNC">       14299 :             if (account == address(0)) revert ZeroAddress();</span></span>
+<span id="L177"><span class="lineNum">     177</span> <span class="tlaGNC">           1 :             if (_blocklist[account]) revert AlreadyBlocklisted(account);</span></span>
+<span id="L178"><span class="lineNum">     178</span>              : </span>
+<span id="L179"><span class="lineNum">     179</span> <span class="tlaGNC">       14297 :             _blocklist[account] = true;</span></span>
+<span id="L180"><span class="lineNum">     180</span> <span class="tlaGNC">       14297 :             emit AddressBlocklisted(account, block.timestamp);</span></span>
+<span id="L181"><span class="lineNum">     181</span>              : </span>
+<span id="L182"><span class="lineNum">     182</span>              :             unchecked {</span>
+<span id="L183"><span class="lineNum">     183</span> <span class="tlaGNC">       14297 :                 ++i;</span></span>
+<span id="L184"><span class="lineNum">     184</span>              :             }</span>
+<span id="L185"><span class="lineNum">     185</span>              :         }</span>
+<span id="L186"><span class="lineNum">     186</span>              :     }</span>
+<span id="L187"><span class="lineNum">     187</span>              : </span>
+<span id="L188"><span class="lineNum">     188</span>              :     /**</span>
+<span id="L189"><span class="lineNum">     189</span>              :      * @notice Removes multiple addresses from blocklist in batch</span>
+<span id="L190"><span class="lineNum">     190</span>              :      * @param accounts Array of addresses to remove from blocklist</span>
+<span id="L191"><span class="lineNum">     191</span>              :      */</span>
+<span id="L192"><span class="lineNum">     192</span> <span class="tlaGNC">         262 :     function removeFromBlocklistBatch(</span></span>
+<span id="L193"><span class="lineNum">     193</span>              :         address[] calldata accounts</span>
+<span id="L194"><span class="lineNum">     194</span>              :     ) external onlyRole(BLOCKLIST_MANAGER_ROLE) {</span>
+<span id="L195"><span class="lineNum">     195</span> <span class="tlaGNC">         260 :         uint256 length = accounts.length;</span></span>
+<span id="L196"><span class="lineNum">     196</span>              : </span>
+<span id="L197"><span class="lineNum">     197</span> <span class="tlaGNC">         260 :         for (uint256 i = 0; i &lt; length; ) {</span></span>
+<span id="L198"><span class="lineNum">     198</span> <span class="tlaGNC">        6628 :             address account = accounts[i];</span></span>
+<span id="L199"><span class="lineNum">     199</span> <span class="tlaGNC">        6628 :             if (account == address(0)) revert ZeroAddress();</span></span>
+<span id="L200"><span class="lineNum">     200</span> <span class="tlaGNC">        6627 :             if (!_blocklist[account]) revert NotBlocklisted(account);</span></span>
+<span id="L201"><span class="lineNum">     201</span>              : </span>
+<span id="L202"><span class="lineNum">     202</span> <span class="tlaGNC">        6626 :             _blocklist[account] = false;</span></span>
+<span id="L203"><span class="lineNum">     203</span> <span class="tlaGNC">        6626 :             emit AddressUnblocklisted(account, block.timestamp);</span></span>
+<span id="L204"><span class="lineNum">     204</span>              : </span>
+<span id="L205"><span class="lineNum">     205</span>              :             unchecked {</span>
+<span id="L206"><span class="lineNum">     206</span> <span class="tlaGNC">        6626 :                 ++i;</span></span>
+<span id="L207"><span class="lineNum">     207</span>              :             }</span>
+<span id="L208"><span class="lineNum">     208</span>              :         }</span>
+<span id="L209"><span class="lineNum">     209</span>              :     }</span>
+<span id="L210"><span class="lineNum">     210</span>              : </span>
+<span id="L211"><span class="lineNum">     211</span>              :     /**</span>
+<span id="L212"><span class="lineNum">     212</span>              :      * @notice Checks if an address is blocklisted</span>
+<span id="L213"><span class="lineNum">     213</span>              :      * @param account Address to check</span>
+<span id="L214"><span class="lineNum">     214</span>              :      * @return bool True if address is blocklisted</span>
+<span id="L215"><span class="lineNum">     215</span>              :      */</span>
+<span id="L216"><span class="lineNum">     216</span> <span class="tlaGNC">       23256 :     function isBlocklisted(address account) public view returns (bool) {</span></span>
+<span id="L217"><span class="lineNum">     217</span> <span class="tlaGNC">       23256 :         return _blocklist[account];</span></span>
+<span id="L218"><span class="lineNum">     218</span>              :     }</span>
+<span id="L219"><span class="lineNum">     219</span>              : </span>
+<span id="L220"><span class="lineNum">     220</span>              :     /**</span>
+<span id="L221"><span class="lineNum">     221</span>              :      * @notice Internal function to update token balances</span>
+<span id="L222"><span class="lineNum">     222</span>              :      * @param from Sender address</span>
+<span id="L223"><span class="lineNum">     223</span>              :      * @param to Recipient address</span>
+<span id="L224"><span class="lineNum">     224</span>              :      * @param amount Amount to transfer</span>
+<span id="L225"><span class="lineNum">     225</span>              :      * @dev Enforces pause state and blocklist checks</span>
+<span id="L226"><span class="lineNum">     226</span>              :      */</span>
+<span id="L227"><span class="lineNum">     227</span> <span class="tlaGNC">        1707 :     function _update(</span></span>
+<span id="L228"><span class="lineNum">     228</span>              :         address from,</span>
+<span id="L229"><span class="lineNum">     229</span>              :         address to,</span>
+<span id="L230"><span class="lineNum">     230</span>              :         uint256 amount</span>
+<span id="L231"><span class="lineNum">     231</span>              :     )</span>
+<span id="L232"><span class="lineNum">     232</span>              :         internal</span>
+<span id="L233"><span class="lineNum">     233</span>              :         override(ERC20Upgradeable, ERC20PausableUpgradeable)</span>
+<span id="L234"><span class="lineNum">     234</span>              :         whenNotPaused</span>
+<span id="L235"><span class="lineNum">     235</span>              :     {</span>
+<span id="L236"><span class="lineNum">     236</span> <span class="tlaGNC">        1446 :         if (from != address(0) &amp;&amp; _blocklist[from]) {</span></span>
+<span id="L237"><span class="lineNum">     237</span> <span class="tlaGNC">         262 :             revert BlocklistedAddress(from);</span></span>
+<span id="L238"><span class="lineNum">     238</span>              :         }</span>
+<span id="L239"><span class="lineNum">     239</span> <span class="tlaGNC">        1184 :         if (to != address(0) &amp;&amp; _blocklist[to]) {</span></span>
+<span id="L240"><span class="lineNum">     240</span> <span class="tlaGNC">         261 :             revert BlocklistedAddress(to);</span></span>
+<span id="L241"><span class="lineNum">     241</span>              :         }</span>
+<span id="L242"><span class="lineNum">     242</span>              : </span>
+<span id="L243"><span class="lineNum">     243</span> <span class="tlaGNC">         923 :         super._update(from, to, amount);</span></span>
+<span id="L244"><span class="lineNum">     244</span>              :     }</span>
+<span id="L245"><span class="lineNum">     245</span>              : </span>
+<span id="L246"><span class="lineNum">     246</span>              :     /**</span>
+<span id="L247"><span class="lineNum">     247</span>              :      * @notice Returns the nonce for permit signatures</span>
+<span id="L248"><span class="lineNum">     248</span>              :      * @param owner Address to get nonce for</span>
+<span id="L249"><span class="lineNum">     249</span>              :      * @return uint256 Nonce for the address</span>
+<span id="L250"><span class="lineNum">     250</span>              :      */</span>
+<span id="L251"><span class="lineNum">     251</span> <span class="tlaGNC">         780 :     function nonces(</span></span>
+<span id="L252"><span class="lineNum">     252</span>              :         address owner</span>
+<span id="L253"><span class="lineNum">     253</span>              :     ) public view override(ERC20PermitUpgradeable) returns (uint256) {</span>
+<span id="L254"><span class="lineNum">     254</span> <span class="tlaGNC">         780 :         return super.nonces(owner);</span></span>
+<span id="L255"><span class="lineNum">     255</span>              :     }</span>
+<span id="L256"><span class="lineNum">     256</span>              : </span>
+<span id="L257"><span class="lineNum">     257</span>              :     /**</span>
+<span id="L258"><span class="lineNum">     258</span>              :      * @notice Override to check blocklist on approvals</span>
+<span id="L259"><span class="lineNum">     259</span>              :      * @param owner Token owner</span>
+<span id="L260"><span class="lineNum">     260</span>              :      * @param spender Address allowed to spend</span>
+<span id="L261"><span class="lineNum">     261</span>              :      * @param value Amount approved</span>
+<span id="L262"><span class="lineNum">     262</span>              :      */</span>
+<span id="L263"><span class="lineNum">     263</span> <span class="tlaGNC">        1826 :     function _approve(</span></span>
+<span id="L264"><span class="lineNum">     264</span>              :         address owner,</span>
+<span id="L265"><span class="lineNum">     265</span>              :         address spender,</span>
+<span id="L266"><span class="lineNum">     266</span>              :         uint256 value,</span>
+<span id="L267"><span class="lineNum">     267</span>              :         bool emitEvent</span>
+<span id="L268"><span class="lineNum">     268</span>              :     ) internal virtual override whenNotPaused {</span>
+<span id="L269"><span class="lineNum">     269</span> <span class="tlaGNC">         261 :         if (_blocklist[owner]) revert BlocklistedAddress(owner);</span></span>
+<span id="L270"><span class="lineNum">     270</span> <span class="tlaGNC">         261 :         if (_blocklist[spender]) revert BlocklistedAddress(spender);</span></span>
+<span id="L271"><span class="lineNum">     271</span> <span class="tlaGNC">        1043 :         super._approve(owner, spender, value, emitEvent);</span></span>
+<span id="L272"><span class="lineNum">     272</span>              :     }</span>
+<span id="L273"><span class="lineNum">     273</span>              : }</span>
+        </pre>
+              </td>
+            </tr>
+          </table>
+          <br>
+
+          <table width="100%" border=0 cellspacing=0 cellpadding=0>
+            <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+            <tr><td class="versionInfo">Generated by: <a href="https://github.com//linux-test-project/lcov" target="_parent">LCOV version 2.3.2-1</a></td></tr>
+          </table>
+          <br>
+
+</body>
+</html>

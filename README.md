@@ -112,18 +112,38 @@ forge test --match-test test_initialize
 forge test -vvv
 ```
 
+## solc_version = 0.8.30
+
+## LOC
+
+````-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Solidity                         1             27             76            129
+-------------------------------------------------------------------------------```
+
+````
+
 ### Test Coverage
+
+```
+╭----------------------------------+-----------------+-----------------+-----------------+-----------------╮
+| File                             | % Lines         | % Statements    | % Branches      | % Funcs         |
++==========================================================================================================+
+| contracts/NEBAToken.sol          | 100.00% (66/66) | 100.00% (66/66) | 100.00% (13/13) | 100.00% (12/12) |
+|----------------------------------+-----------------+-----------------+-----------------+-----------------|
+| Total                            | 100.00% (66/66) | 100.00% (66/66) | 100.00% (13/13) | 100.00% (12/12) |
+╰----------------------------------+-----------------+-----------------+-----------------+-----------------╯
+```
 
 ## 📊 Test Coverage Summary
 
-The NEBA Token contract has comprehensive test coverage with **30 test cases** covering all critical functionality:
+The NEBA Token contract has comprehensive test coverage with **80 test cases** covering all critical functionality:
 
 ### 📈 Coverage Statistics
 
-- **Total Tests**: 30
-- **Pass Rate**: 100% (30/30 passed)
-- **Test Categories**: 6 major functional areas
-- **Gas Optimization**: All functions tested for gas efficiency
+- **Total Tests**: 80
+- **Pass Rate**: 100% (80/80 passed)
 
 ### 🧪 Test Categories
 
@@ -210,7 +230,7 @@ out = "out"
 libs = ["lib"]
 ```
 
-### Dependencies
+### External Dependencies
 
 Contracts use ^0.8.20 to remain forward-compatible with future compiler releases.
 
