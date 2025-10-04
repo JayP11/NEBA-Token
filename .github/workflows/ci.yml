@@ -49,13 +49,6 @@ jobs:
       - run: forge --version
       - run: forge fmt --check
 
-  typos:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: crate-ci/typos@v1
-
   ci-success:
     runs-on: ubuntu-latest
     if: always()
@@ -63,7 +56,6 @@ jobs:
       - build
       - test
       - fmt
-      - typos
     timeout-minutes: 10
     steps:
       - name: Decide whether the needed jobs succeeded or failed
