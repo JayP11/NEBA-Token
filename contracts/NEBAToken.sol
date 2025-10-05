@@ -19,8 +19,8 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
  * - Role-based access control (Admin, Upgrader, Admin Pauser, Bot Pauser)
  * - Pausable transfers for emergency controls
  * - Reentrancy protection
- *
- * - ADMIN_PAUSER_ROLE can pause and unpause the token and grant roles to other addresses
+ * - DEFAULT_ADMIN_ROLE can grant roles
+ * - ADMIN_PAUSER_ROLE can pause and unpause the token
  * - BOT_PAUSER_ROLE can pause the token for bots
  * - UPGRADER_ROLE can upgrade the contract
  */
