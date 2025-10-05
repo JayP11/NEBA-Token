@@ -1,1 +1,1 @@
-genhtml lcov.info -o coverage
+genhtml lcov.info --branch-coverage --output-dir coverage

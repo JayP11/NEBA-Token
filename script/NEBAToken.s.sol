@@ -54,12 +54,10 @@ contract DeployNEBAToken is Script {
         bytes32 ADMIN_PAUSER_ROLE = nebaToken.ADMIN_PAUSER_ROLE();
         bytes32 BOT_PAUSER_ROLE = nebaToken.BOT_PAUSER_ROLE();
         bytes32 UPGRADER_ROLE = nebaToken.UPGRADER_ROLE();
-        bytes32 BLOCKLIST_MANAGER_ROLE = nebaToken.BLOCKLIST_MANAGER_ROLE();
 
         console.log("\n=== Role Verification ===");
         console.log("Admin has DEFAULT_ADMIN_ROLE:", nebaToken.hasRole(DEFAULT_ADMIN_ROLE, adminTreasury));
         console.log("Admin has ADMIN_PAUSER_ROLE:", nebaToken.hasRole(ADMIN_PAUSER_ROLE, adminTreasury));
-        console.log("Admin has BLOCKLIST_MANAGER_ROLE:", nebaToken.hasRole(BLOCKLIST_MANAGER_ROLE, adminTreasury));
         console.log("Bot has BOT_PAUSER_ROLE:", nebaToken.hasRole(BOT_PAUSER_ROLE, botAddress));
         console.log("Upgrader has UPGRADER_ROLE:", nebaToken.hasRole(UPGRADER_ROLE, upgraderAddress));
 

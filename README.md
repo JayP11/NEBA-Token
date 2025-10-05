@@ -1,6 +1,6 @@
 # NEBA Token
 
-A secure, upgradeable ERC-20 token implementation with advanced compliance and governance features, built on OpenZeppelin's battle-tested contracts.
+A secure, upgradeable ERC-20 token implementation with strong security primitives, emergency controls, and upgradeable architecture designed for future governance features, built on OpenZeppelin's battle-tested contracts.
 
 ## 🌟 Overview
 
@@ -13,18 +13,10 @@ NEBA Token is a production-ready ERC-20 token with a fixed supply of 1 billion t
 - **UUPS Upgradeable**: Safe contract upgrades with proper authorization
 - **Role-Based Access Control**: Granular permissions for different administrative functions
 - **Pausable Transfers**: Emergency pause functionality for crisis management
-- **Blocklist Management**: Address blocking for compliance and security
 - **Reentrancy Protection**: Built-in guards against reentrancy attacks
-
-### 🗳️ Governance Ready
-
-- **ERC20Votes**: Built-in voting capabilities for future governance
-- **EIP-2612 Permit**: Gasless approvals for better UX
-- **Delegation Support**: Token holders can delegate voting power
 
 ### 🛡️ Advanced Features
 
-- **Batch Operations**: Efficient batch blocklist management
 - **Custom Errors**: Gas-efficient error handling
 - **Storage Gap**: Safe upgrade pattern with reserved storage slots
 - **Comprehensive Testing**: Full test coverage with Foundry
@@ -37,20 +29,26 @@ NEBA Token is a production-ready ERC-20 token with a fixed supply of 1 billion t
 NEBAToken
 ├── ERC20Upgradeable (Base token functionality)
 ├── ERC20PausableUpgradeable (Pause/unpause transfers)
-├── ERC20PermitUpgradeable (Gasless approvals)
-├── ERC20VotesUpgradeable (Voting capabilities)
 ├── AccessControlUpgradeable (Role management)
 ├── UUPSUpgradeable (Safe upgrades)
 └── ReentrancyGuardUpgradeable (Reentrancy protection)
+
+
 ```
 
 ### Role System
 
-- **DEFAULT_ADMIN_ROLE**: Full administrative control
+### Roles
+
+| Role               | Can Do                      |
+| ------------------ | --------------------------- |
+| **Admin Treasury** | Grant roles, pause, unpause |
+| **Bot Pauser**     | Pause only                  |
+| **Upgrader**       | Upgrade contract            |
+
 - **ADMIN_PAUSER_ROLE**: Can pause/unpause transfers
 - **BOT_PAUSER_ROLE**: Can pause transfers, but cannot unpause (for automated systems)
 - **UPGRADER_ROLE**: Can upgrade contract implementation
-- **BLOCKLIST_MANAGER_ROLE**: Can manage address blocklist
 
 ## 🚀 Quick Start
 
@@ -68,6 +66,10 @@ cd neba-token
 
 # Install dependencies
 forge install
+
+# Install OpenZeppelin and Forge std lib
+forge install OpenZeppelin/openzeppelin-contracts-upgradeable@5.0.2
+forge install foundry-rs/forge-std
 
 # Build contracts
 forge build
@@ -112,88 +114,41 @@ forge test --match-test test_initialize
 forge test -vvv
 ```
 
-## solc_version = 0.8.30
-
 ## LOC
 
-````-------------------------------------------------------------------------------
+```
+-------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Solidity                         1             27             76            129
--------------------------------------------------------------------------------```
-
-````
+Solidity                         1             17             57             71
+-------------------------------------------------------------------------------
+```
 
 ### Test Coverage
 
 ```
-╭----------------------------------+-----------------+-----------------+-----------------+-----------------╮
-| File                             | % Lines         | % Statements    | % Branches      | % Funcs         |
-+==========================================================================================================+
-| contracts/NEBAToken.sol          | 100.00% (66/66) | 100.00% (66/66) | 100.00% (13/13) | 100.00% (12/12) |
-|----------------------------------+-----------------+-----------------+-----------------+-----------------|
-| Total                            | 100.00% (66/66) | 100.00% (66/66) | 100.00% (13/13) | 100.00% (12/12) |
-╰----------------------------------+-----------------+-----------------+-----------------+-----------------╯
+╭------------------------------------------+-------------------+-----------------+-----------------+-----------------╮
+| File                                     | % Lines           | % Statements    | % Branches      | % Funcs         |
++====================================================================================================================+
+| contracts/NEBAToken.sol                  | 100.00% (32/32)   | 100.00% (27/27) | 100.00% (4/4)   | 100.00% (8/8)   |
+|------------------------------------------+-------------------+-----------------+-----------------+-----------------|
+| test/NEBAToken.integration.t.sol         | 100.00% (4/4)     | 100.00% (2/2)   | 100.00% (0/0)   | 100.00% (2/2)   |
+|------------------------------------------+-------------------+-----------------+-----------------+-----------------|
+| test/invariants/NEBATokenInvariant.t.sol | 100.00% (66/66)   | 100.00% (66/66) | 100.00% (8/8)   | 100.00% (9/9)   |
+|------------------------------------------+-------------------+-----------------+-----------------+-----------------|
+| Total                                    | 100.00% (102/102) | 100.00% (95/95) | 100.00% (12/12) | 100.00% (19/19) |
+╰------------------------------------------+-------------------+-----------------+-----------------+-----------------╯
+NOTE: Fuzz tests (test/NEBAToken.fuzz.t.sol) are not included in the above coverage table by default. They are used to explore edge cases and invariants beyond fixed test cases.
 ```
 
 ## 📊 Test Coverage Summary
 
-The NEBA Token contract has comprehensive test coverage with **80 test cases** covering all critical functionality:
+The NEBA Token contract has comprehensive test coverage with **51 test cases** covering all critical functionality:
 
 ### 📈 Coverage Statistics
 
-- **Total Tests**: 80
-- **Pass Rate**: 100% (80/80 passed)
-
-### 🧪 Test Categories
-
-#### 1. **Contract Initialization** (3 tests)
-
-- ✅ `test_initialize()` - Verifies proper contract setup
-- ✅ `test_revertWhen_initializeWithZeroAddress()` - Zero address validation
-- ✅ `test_Initialize_CannotReinitialize()` - Reinitialization protection
-
-#### 2. **Role Management** (1 test)
-
-- ✅ `test_RoleManagement_AdminCanGrantAndRevokeRoles()` - Access control verification
-
-#### 3. **Pause/Unpause Functionality** (8 tests)
-
-- ✅ `test_pause()` - Admin pause capability
-- ✅ `test_pauseBy_botAddress()` - Bot pause capability
-- ✅ `test_unpause()` - Admin unpause capability
-- ✅ `test_unpause_by_botAddress()` - Bot unpause restrictions
-- ✅ `test_revertWhen_pauseBy_nonPauser()` - Unauthorized pause prevention
-- ✅ `test_revertWhen_unpauseBy_OtherAddress()` - Unauthorized unpause prevention
-- ✅ `testCannotPauseWhenAlreadyPaused()` - Double pause prevention
-- ✅ `testCannotUnPauseWhenAlreadyUnPaused()` - Double unpause prevention
-
-#### 4. **Blocklist Management** (8 tests)
-
-- ✅ `testAddToBlocklistBatch_Success()` - Batch blocklist addition
-- ✅ `testAddToBlocklistBatch_RevertOn_ZeroAddress()` - Zero address validation
-- ✅ `testAddToBlocklistBatch_Revert_InvalidCall()` - Unauthorized access prevention
-- ✅ `test_AddToBlocklistBatch_RevertWhen_AlreadyBlocklisted()` - Duplicate prevention
-- ✅ `testRemoveFromBlocklistBatch_Success()` - Batch blocklist removal
-- ✅ `testRemoveFromBlocklistBatch_RevertOn_ZeroAddress()` - Zero address validation
-- ✅ `testRemoveFromBlocklistBatch_Revert_InvalidCall()` - Unauthorized access prevention
-- ✅ `test_RemoveFromBlocklistBatch_RevertWhen_AlreadyUnBlocklisted()` - Duplicate prevention
-
-#### 5. **Transfer Restrictions** (8 tests)
-
-- ✅ `test_Transfer_RevertIf_SenderBlocklisted()` - Blocked sender prevention
-- ✅ `test_Transfer_RevertIf_RecipientBlocklisted()` - Blocked recipient prevention
-- ✅ `test_Approve_RevertIf_OwnerBlocklisted()` - Blocked owner approval prevention
-- ✅ `test_Approve_RevertIf_SpenderBlocklisted()` - Blocked spender approval prevention
-- ✅ `test_TransferFrom_RevertIf_SenderBlocklisted()` - Blocked sender transferFrom prevention
-- ✅ `test_TransferFrom_RevertIf_RecipientBlocklisted()` - Blocked recipient transferFrom prevention
-- ✅ `test_Transfer_RevertIf_Paused()` - Paused state transfer prevention
-- ✅ `test_Approve_RevertIf_Paused()` - Paused state approval prevention
-
-#### 6. **Upgrade & Edge Cases** (2 tests)
-
-- ✅ `test_Upgrade_AccessControl()` - Upgrade authorization verification
-- ✅ `test_Transfer_RevertIf_ZeroAmount()` - Zero amount transfer prevention
+- **Total Tests**: 51
+- **Pass Rate**: 100% (51/51 passed)
 
 ### 🔧 Test Execution
 
@@ -217,17 +172,44 @@ forge test -vvv
 
 For full coverage details, see [audits/coverage.md](./audits/coverage.md)
 
+## 📚 Documentation
+
+Full contract documentation is available in the [docs](./docs/src/contracts/NEBAToken.sol/contract.NEBAToken.md) directory, generated from NatSpec comments.
+
+### View Documentation
+
+**Local viewing:**
+
+```bash
+forge doc --serve
+```
+
 ## 🔧 Configuration
 
 ### Foundry Configuration
 
 The project uses Foundry for development and testing. Key configuration in `foundry.toml`:
 
+#### Optimizer Configuration
+
 ```toml
 [profile.default]
 src = "contracts"
 out = "out"
 libs = ["lib"]
+solc_version = "0.8.30"
+
+
+optimizer = true
+optimizer_runs = 200
+
+via_ir = true
+
+[profile.default.invariant]
+runs = 256
+depth = 15
+fail_on_revert = false
+call_override = false
 ```
 
 ### External Dependencies
@@ -253,7 +235,6 @@ Contracts use ^0.8.20 to remain forward-compatible with future compiler releases
 
 ### Compliance Features
 
-- Blocklist for regulatory compliance
 - Pause functionality for emergency situations
 - Audit trail through events
 
@@ -275,8 +256,12 @@ Contracts use ^0.8.20 to remain forward-compatible with future compiler releases
 ## 📝 Events
 
 ```solidity
-event AddressBlocklisted(address indexed account, uint256 timestamp);
-event AddressUnblocklisted(address indexed account, uint256 timestamp);
 event CircuitBreakerActivated(address indexed by, uint256 timestamp);
 event CircuitBreakerDeactivated(address indexed by, uint256 timestamp);
 ```
+
+## Architecture Diagram
+
+## 📄 License
+
+This project is licensed under the [MIT License](./LICENSE).

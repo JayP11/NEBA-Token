@@ -9,5 +9,13 @@ optimizer_runs = 200
 
 via_ir = true
 
+snapshot_file = "tools/.gas-snapshot"
+
+[profile.default.invariant]
+runs = 256
+depth = 15
+fail_on_revert = false
+call_override = false
+
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
