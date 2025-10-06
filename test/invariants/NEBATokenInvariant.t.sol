@@ -19,12 +19,7 @@ contract NEBATokenInvariant is Test {
     uint256 public ghost_pauseCount;
     uint256 public ghost_unpauseCount;
 
-    constructor(
-        NEBAToken _token,
-        address _admin,
-        address _upgrader,
-        address _bot
-    ) {
+    constructor(NEBAToken _token, address _admin, address _upgrader, address _bot) {
         token = _token;
         adminTreasury = _admin;
         upgrader = _upgrader;
@@ -52,11 +47,7 @@ contract NEBATokenInvariant is Test {
         } catch {}
     }
 
-    function transferToNewAddress(
-        uint256 fromSeed,
-        address newTo,
-        uint256 amount
-    ) public {
+    function transferToNewAddress(uint256 fromSeed, address newTo, uint256 amount) public {
         if (actors.length == 0) return;
         if (newTo == address(0) || newTo == address(token)) return;
 
@@ -74,12 +65,7 @@ contract NEBATokenInvariant is Test {
         } catch {}
     }
 
-    function transferFrom(
-        uint256 fromSeed,
-        uint256 toSeed,
-        uint256 spenderSeed,
-        uint256 amount
-    ) public {
+    function transferFrom(uint256 fromSeed, uint256 toSeed, uint256 spenderSeed, uint256 amount) public {
         if (actors.length < 2) return;
 
         address from = actors[fromSeed % actors.length];
@@ -93,7 +79,8 @@ contract NEBATokenInvariant is Test {
         amount = bound(amount, 0, balance);
 
         vm.prank(from);
-        try token.approve(spender, amount) {} catch {
+        try token.approve(spender, amount) {}
+        catch {
             return;
         }
 
@@ -156,17 +143,9 @@ contract NEBATokenAccountingInvariantTest is Test {
 
         NEBAToken implementation = new NEBAToken();
 
-        bytes memory initData = abi.encodeWithSelector(
-            NEBAToken.initialize.selector,
-            adminTreasury,
-            upgrader,
-            bot
-        );
+        bytes memory initData = abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, bot);
 
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(implementation),
-            initData
-        );
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         token = NEBAToken(address(proxy));
 
         handler = new NEBATokenInvariant(token, adminTreasury, upgrader, bot);
@@ -183,17 +162,11 @@ contract NEBATokenAccountingInvariantTest is Test {
         selectors[3] = NEBATokenInvariant.pause.selector;
         selectors[4] = NEBATokenInvariant.unpause.selector;
 
-        targetSelector(
-            FuzzSelector({addr: address(handler), selectors: selectors})
-        );
+        targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
     }
 
     function invariant_totalSupplyIsConstant() public view {
-        assertEq(
-            token.totalSupply(),
-            token.INITIAL_SUPPLY(),
-            "Total supply changed from initial supply"
-        );
+        assertEq(token.totalSupply(), token.INITIAL_SUPPLY(), "Total supply changed from initial supply");
     }
 
     function invariant_sumOfBalancesEqualsTotalSupply() public view {
@@ -209,29 +182,17 @@ contract NEBATokenAccountingInvariantTest is Test {
 
         for (uint256 i = 0; i < actors.length; i++) {
             uint256 balance = token.balanceOf(actors[i]);
-            assertLe(
-                balance,
-                totalSupply,
-                "Individual balance exceeds total supply"
-            );
+            assertLe(balance, totalSupply, "Individual balance exceeds total supply");
         }
     }
 
     function invariant_tokenContractHasZeroBalance() public view {
-        assertEq(
-            token.balanceOf(address(token)),
-            0,
-            "Token contract holds tokens"
-        );
+        assertEq(token.balanceOf(address(token)), 0, "Token contract holds tokens");
     }
 
     function invariant_handlerBalanceValid() public view {
         uint256 handlerBalance = token.balanceOf(address(handler));
-        assertLe(
-            handlerBalance,
-            token.totalSupply(),
-            "Handler balance exceeds total supply"
-        );
+        assertLe(handlerBalance, token.totalSupply(), "Handler balance exceeds total supply");
     }
 
     function invariant_callSummary() public view {
@@ -262,17 +223,9 @@ contract NEBATokenHandlerUnitTest is Test {
 
         NEBAToken implementation = new NEBAToken();
 
-        bytes memory initData = abi.encodeWithSelector(
-            NEBAToken.initialize.selector,
-            adminTreasury,
-            upgrader,
-            bot
-        );
+        bytes memory initData = abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, bot);
 
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(implementation),
-            initData
-        );
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         token = NEBAToken(address(proxy));
 
         handler = new NEBATokenInvariant(token, adminTreasury, upgrader, bot);
@@ -317,31 +270,19 @@ contract NEBATokenHandlerUnitTest is Test {
 
         uint256 beforeCount = handler.ghost_transferCount();
         handler.transfer(user2Index, 0, 1000);
-        assertEq(
-            handler.ghost_transferCount(),
-            beforeCount,
-            "Transfer count should not increase"
-        );
+        assertEq(handler.ghost_transferCount(), beforeCount, "Transfer count should not increase");
     }
 
     function test_Handler_TransferToNewAddressZero() public {
         uint256 beforeCount = handler.ghost_transferCount();
         handler.transferToNewAddress(0, address(0), 1000);
-        assertEq(
-            handler.ghost_transferCount(),
-            beforeCount,
-            "Should skip zero address"
-        );
+        assertEq(handler.ghost_transferCount(), beforeCount, "Should skip zero address");
     }
 
     function test_Handler_TransferToNewAddressTokenContract() public {
         uint256 beforeCount = handler.ghost_transferCount();
         handler.transferToNewAddress(0, address(token), 1000);
-        assertEq(
-            handler.ghost_transferCount(),
-            beforeCount,
-            "Should skip token address"
-        );
+        assertEq(handler.ghost_transferCount(), beforeCount, "Should skip token address");
     }
 
     function test_Handler_TransferFromInsufficientActors() public {
@@ -349,22 +290,12 @@ contract NEBATokenHandlerUnitTest is Test {
             address(
                 new ERC1967Proxy(
                     address(new NEBAToken()),
-                    abi.encodeWithSelector(
-                        NEBAToken.initialize.selector,
-                        adminTreasury,
-                        upgrader,
-                        bot
-                    )
+                    abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, bot)
                 )
             )
         );
 
-        NEBATokenInvariant newHandler = new NEBATokenInvariant(
-            newToken,
-            adminTreasury,
-            upgrader,
-            bot
-        );
+        NEBATokenInvariant newHandler = new NEBATokenInvariant(newToken, adminTreasury, upgrader, bot);
 
         newHandler.transferFrom(0, 1, 2, 1000);
     }
@@ -397,11 +328,7 @@ contract NEBATokenHandlerUnitTest is Test {
 
         uint256 beforeCount = handler.ghost_unpauseCount();
         handler.unpause(0);
-        assertEq(
-            handler.ghost_unpauseCount(),
-            beforeCount,
-            "Unpause should fail"
-        );
+        assertEq(handler.ghost_unpauseCount(), beforeCount, "Unpause should fail");
     }
 
     function test_Handler_PauseAndUnpauseSuccess() public {
@@ -410,11 +337,7 @@ contract NEBATokenHandlerUnitTest is Test {
         assertTrue(token.paused(), "Token should be paused");
 
         handler.unpause(0);
-        assertEq(
-            handler.ghost_unpauseCount(),
-            1,
-            "Unpause count should increase"
-        );
+        assertEq(handler.ghost_unpauseCount(), 1, "Unpause count should increase");
         assertFalse(token.paused(), "Token should not be paused");
     }
 
@@ -424,11 +347,7 @@ contract NEBATokenHandlerUnitTest is Test {
 
         uint256 beforeCount = handler.ghost_transferCount();
         handler.transferFrom(0, 1, 2, 1000);
-        assertEq(
-            handler.ghost_transferCount(),
-            beforeCount,
-            "Transfer should not occur"
-        );
+        assertEq(handler.ghost_transferCount(), beforeCount, "Transfer should not occur");
 
         vm.prank(adminTreasury);
         token.unpause();

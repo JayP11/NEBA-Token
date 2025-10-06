@@ -26,17 +26,10 @@ contract NEBATokenFuzzTest is Test {
 
         implementation = new NEBAToken();
 
-        bytes memory initData = abi.encodeWithSelector(
-            NEBAToken.initialize.selector,
-            adminTreasury,
-            upgraderAddress,
-            botAddress
-        );
+        bytes memory initData =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, botAddress);
 
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(implementation),
-            initData
-        );
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         token = NEBAToken(address(proxy));
     }
 
@@ -62,11 +55,7 @@ contract NEBATokenFuzzTest is Test {
         assertEq(token.totalSupply(), 1_000_000_000e18);
     }
 
-    function testFuzz_TransferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) public {
+    function testFuzz_TransferFrom(address from, address to, uint256 amount) public {
         vm.assume(from != address(0) && to != address(0));
         vm.assume(from != to);
 
@@ -166,10 +155,7 @@ contract NEBATokenFuzzTest is Test {
 
     // ========== PAUSED STATE FUZZ TESTS ==========
 
-    function testFuzz_TransferRevertWhenPaused(
-        address to,
-        uint256 amount
-    ) public {
+    function testFuzz_TransferRevertWhenPaused(address to, uint256 amount) public {
         vm.assume(to != address(0));
 
         vm.prank(adminTreasury);
@@ -182,10 +168,7 @@ contract NEBATokenFuzzTest is Test {
         token.transfer(to, amount);
     }
 
-    function testFuzz_ApproveRevertWhenPaused(
-        address spender,
-        uint256 amount
-    ) public {
+    function testFuzz_ApproveRevertWhenPaused(address spender, uint256 amount) public {
         vm.assume(spender != address(0));
 
         vm.prank(adminTreasury);
