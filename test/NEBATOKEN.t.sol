@@ -28,12 +28,8 @@ contract NEBATokenTest is Test {
     function setUp() public {
         implementation = new NEBAToken();
 
-        bytes memory data = abi.encodeWithSelector(
-            NEBAToken.initialize.selector,
-            adminTreasury,
-            upgraderAddress,
-            botAddress
-        );
+        bytes memory data =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, botAddress);
 
         proxy = new ERC1967Proxy(address(implementation), data);
         nebaToken = NEBAToken(address(proxy));
@@ -54,36 +50,23 @@ contract NEBATokenTest is Test {
 
     function test_revertWhen_initializeWithZeroAddress() public {
         NEBAToken newImpl = new NEBAToken();
-        bytes memory data = abi.encodeWithSelector(
-            NEBAToken.initialize.selector,
-            address(0),
-            upgraderAddress,
-            botAddress
-        );
+        bytes memory data =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, address(0), upgraderAddress, botAddress);
         vm.expectRevert(NEBAToken.ZeroAddress.selector);
         new ERC1967Proxy(address(newImpl), data);
     }
 
     function test_revertWhen_initializeWithZeroUpgraderAddress() public {
         NEBAToken newImpl = new NEBAToken();
-        bytes memory data = abi.encodeWithSelector(
-            NEBAToken.initialize.selector,
-            adminTreasury,
-            address(0),
-            botAddress
-        );
+        bytes memory data = abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, address(0), botAddress);
         vm.expectRevert(NEBAToken.ZeroAddress.selector);
         new ERC1967Proxy(address(newImpl), data);
     }
 
     function test_revertWhen_initializeWithZeroBotAddress() public {
         NEBAToken newImpl = new NEBAToken();
-        bytes memory data = abi.encodeWithSelector(
-            NEBAToken.initialize.selector,
-            adminTreasury,
-            upgraderAddress,
-            address(0)
-        );
+        bytes memory data =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, address(0));
         vm.expectRevert(NEBAToken.ZeroAddress.selector);
         new ERC1967Proxy(address(newImpl), data);
     }
@@ -171,9 +154,7 @@ contract NEBATokenTest is Test {
 
     function test_revertWhen_pauseBy_nonPauser() public {
         vm.prank(user1);
-        vm.expectRevert(
-            abi.encodeWithSelector(NEBAToken.UnauthorizedPauser.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(NEBAToken.UnauthorizedPauser.selector));
         nebaToken.pause();
     }
 
