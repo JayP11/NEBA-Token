@@ -12,6 +12,7 @@ contract NEBATokenTest is Test {
 
     address public adminTreasury = makeAddr("adminTreasury");
     address public upgraderAddress = makeAddr("upgraderAddress");
+    address public adminPauser = makeAddr("adminPauser");
     address public botAddress = makeAddr("botAddress");
 
     address public user1 = makeAddr("user1");
@@ -28,8 +29,9 @@ contract NEBATokenTest is Test {
     function setUp() public {
         implementation = new NEBAToken();
 
-        bytes memory data =
-            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, botAddress);
+        bytes memory data = abi.encodeWithSelector(
+            NEBAToken.initialize.selector, adminTreasury, upgraderAddress, adminPauser, botAddress
+        );
 
         proxy = new ERC1967Proxy(address(implementation), data);
         nebaToken = NEBAToken(address(proxy));
@@ -43,7 +45,7 @@ contract NEBATokenTest is Test {
         assertEq(nebaToken.totalSupply(), INITIAL_SUPPLY);
         assertEq(nebaToken.balanceOf(adminTreasury), INITIAL_SUPPLY);
         assertEq(nebaToken.hasRole(DEFAULT_ADMIN_ROLE, adminTreasury), true);
-        assertEq(nebaToken.hasRole(ADMIN_PAUSER_ROLE, adminTreasury), true);
+        assertEq(nebaToken.hasRole(ADMIN_PAUSER_ROLE, adminPauser), true);
         assertEq(nebaToken.hasRole(BOT_PAUSER_ROLE, botAddress), true);
         assertEq(nebaToken.hasRole(UPGRADER_ROLE, upgraderAddress), true);
     }
@@ -51,34 +53,45 @@ contract NEBATokenTest is Test {
     function test_revertWhen_initializeWithZeroAddress() public {
         NEBAToken newImpl = new NEBAToken();
         bytes memory data =
-            abi.encodeWithSelector(NEBAToken.initialize.selector, address(0), upgraderAddress, botAddress);
+            abi.encodeWithSelector(NEBAToken.initialize.selector, address(0), upgraderAddress, adminPauser, botAddress);
         vm.expectRevert(NEBAToken.ZeroAddress.selector);
         new ERC1967Proxy(address(newImpl), data);
     }
 
     function test_revertWhen_initializeWithZeroUpgraderAddress() public {
         NEBAToken newImpl = new NEBAToken();
-        bytes memory data = abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, address(0), botAddress);
+        bytes memory data =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, address(0), adminPauser, botAddress);
+        vm.expectRevert(NEBAToken.ZeroAddress.selector);
+        new ERC1967Proxy(address(newImpl), data);
+    }
+
+    function test_revertWhen_initializeWithZeroAdminPauser() public {
+        NEBAToken newImpl = new NEBAToken();
+        bytes memory data = abi.encodeWithSelector(
+            NEBAToken.initialize.selector, adminTreasury, upgraderAddress, address(0), botAddress
+        );
         vm.expectRevert(NEBAToken.ZeroAddress.selector);
         new ERC1967Proxy(address(newImpl), data);
     }
 
     function test_revertWhen_initializeWithZeroBotAddress() public {
         NEBAToken newImpl = new NEBAToken();
-        bytes memory data =
-            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, address(0));
+        bytes memory data = abi.encodeWithSelector(
+            NEBAToken.initialize.selector, adminTreasury, upgraderAddress, adminPauser, address(0)
+        );
         vm.expectRevert(NEBAToken.ZeroAddress.selector);
         new ERC1967Proxy(address(newImpl), data);
     }
 
     function test_Initialize_CannotReinitialize() public {
         vm.expectRevert();
-        nebaToken.initialize(adminTreasury, upgraderAddress, botAddress);
+        nebaToken.initialize(adminTreasury, upgraderAddress, adminPauser, botAddress);
     }
 
     function test_Implementation_IsDisabled() public {
         vm.expectRevert();
-        implementation.initialize(adminTreasury, upgraderAddress, botAddress);
+        implementation.initialize(adminTreasury, upgraderAddress, adminPauser, botAddress);
     }
 
     function test_Upgrade_PreservesState() public {
@@ -131,8 +144,8 @@ contract NEBATokenTest is Test {
 
     //  PAUSE TESTS
 
-    function test_pause() public {
-        vm.prank(adminTreasury);
+    function test_pause_byAdminPauser() public {
+        vm.prank(adminPauser);
         nebaToken.pause();
         assertEq(nebaToken.paused(), true);
     }
@@ -159,25 +172,25 @@ contract NEBATokenTest is Test {
     }
 
     function testCannotPauseWhenAlreadyPaused() public {
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         nebaToken.pause();
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         vm.expectRevert();
         nebaToken.pause();
     }
 
-    function test_unpause() public {
-        vm.prank(adminTreasury);
+    function test_unpause_by_adminPauser() public {
+        vm.prank(adminPauser);
         nebaToken.pause();
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         nebaToken.unpause();
         assertEq(nebaToken.paused(), false);
     }
 
     function test_revertWhen_unpauseBy_OtherAddress() public {
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         nebaToken.pause();
 
         vm.prank(botAddress);
@@ -186,13 +199,13 @@ contract NEBATokenTest is Test {
     }
 
     function testCannotUnPauseWhenAlreadyUnPaused() public {
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         nebaToken.pause();
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         nebaToken.unpause();
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         vm.expectRevert();
         nebaToken.unpause();
     }
@@ -214,7 +227,7 @@ contract NEBATokenTest is Test {
     // TRANSFER TESTS
 
     function test_Transfer_RevertIf_Paused() public {
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         nebaToken.pause();
 
         vm.prank(adminTreasury);
@@ -223,7 +236,7 @@ contract NEBATokenTest is Test {
     }
 
     function test_Approve_RevertIf_Paused() public {
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         nebaToken.pause();
 
         vm.prank(adminTreasury);

@@ -24,6 +24,7 @@ contract NEBATokenIntegrationTest is Test {
 
     address public adminTreasury;
     address public upgrader;
+    address public adminPauser;
     address public bot;
     address public user1;
     address public user2;
@@ -42,6 +43,7 @@ contract NEBATokenIntegrationTest is Test {
     function setUp() public {
         adminTreasury = makeAddr("adminTreasury");
         upgrader = makeAddr("upgrader");
+        adminPauser = makeAddr("adminPauser");
         bot = makeAddr("bot");
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
@@ -49,7 +51,8 @@ contract NEBATokenIntegrationTest is Test {
 
         implementation = new NEBAToken();
 
-        bytes memory initData = abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, bot);
+        bytes memory initData =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, adminPauser, bot);
 
         proxy = new ERC1967Proxy(address(implementation), initData);
         token = NEBAToken(address(proxy));
@@ -62,7 +65,7 @@ contract NEBATokenIntegrationTest is Test {
         assertEq(token.totalSupply(), INITIAL_SUPPLY);
         assertEq(token.balanceOf(adminTreasury), INITIAL_SUPPLY);
         assertTrue(token.hasRole(DEFAULT_ADMIN_ROLE, adminTreasury));
-        assertTrue(token.hasRole(ADMIN_PAUSER_ROLE, adminTreasury));
+        assertTrue(token.hasRole(ADMIN_PAUSER_ROLE, adminPauser));
         assertTrue(token.hasRole(BOT_PAUSER_ROLE, bot));
         assertTrue(token.hasRole(UPGRADER_ROLE, upgrader));
     }
@@ -96,9 +99,9 @@ contract NEBATokenIntegrationTest is Test {
     }
 
     function test_Integration_PauseAndUnpauseFlow() public {
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         vm.expectEmit(true, false, false, true);
-        emit CircuitBreakerActivated(adminTreasury, block.timestamp);
+        emit CircuitBreakerActivated(adminPauser, block.timestamp);
         token.pause();
         assertTrue(token.paused());
 
@@ -106,9 +109,9 @@ contract NEBATokenIntegrationTest is Test {
         vm.expectRevert();
         token.transfer(user2, 100);
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         vm.expectEmit(true, false, false, true);
-        emit CircuitBreakerDeactivated(adminTreasury, block.timestamp);
+        emit CircuitBreakerDeactivated(adminPauser, block.timestamp);
         token.unpause();
         assertFalse(token.paused());
     }
@@ -122,7 +125,7 @@ contract NEBATokenIntegrationTest is Test {
         vm.expectRevert();
         token.unpause();
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         token.unpause();
         assertFalse(token.paused());
     }
@@ -146,7 +149,7 @@ contract NEBATokenIntegrationTest is Test {
     }
 
     function test_Integration_UpgradePreservesPauseState() public {
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         token.pause();
         assertTrue(token.paused());
 
@@ -157,7 +160,7 @@ contract NEBATokenIntegrationTest is Test {
         NEBATokenV2Mock tokenV2 = NEBATokenV2Mock(address(token));
         assertTrue(tokenV2.paused());
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         tokenV2.unpause();
         assertFalse(tokenV2.paused());
     }

@@ -11,6 +11,7 @@ contract NEBATokenFuzzTest is Test {
 
     address public adminTreasury;
     address public upgraderAddress;
+    address public adminPauserAddress;
     address public botAddress;
 
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -22,12 +23,14 @@ contract NEBATokenFuzzTest is Test {
     function setUp() public {
         adminTreasury = makeAddr("adminTreasury");
         upgraderAddress = makeAddr("upgraderAddress");
+        adminPauserAddress = makeAddr("adminPauserAddress");
         botAddress = makeAddr("botAddress");
 
         implementation = new NEBAToken();
 
-        bytes memory initData =
-            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, botAddress);
+        bytes memory initData = abi.encodeWithSelector(
+            NEBAToken.initialize.selector, adminTreasury, upgraderAddress, adminPauserAddress, botAddress
+        );
 
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         token = NEBAToken(address(proxy));
@@ -117,7 +120,7 @@ contract NEBATokenFuzzTest is Test {
     function testFuzz_UnpauseByAdminPauser(address caller) public {
         vm.assume(caller != address(0));
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauserAddress);
         token.pause();
 
         vm.prank(adminTreasury);
@@ -158,7 +161,7 @@ contract NEBATokenFuzzTest is Test {
     function testFuzz_TransferRevertWhenPaused(address to, uint256 amount) public {
         vm.assume(to != address(0));
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauserAddress);
         token.pause();
 
         amount = bound(amount, 1, token.balanceOf(adminTreasury));
@@ -171,7 +174,7 @@ contract NEBATokenFuzzTest is Test {
     function testFuzz_ApproveRevertWhenPaused(address spender, uint256 amount) public {
         vm.assume(spender != address(0));
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauserAddress);
         token.pause();
 
         vm.prank(adminTreasury);

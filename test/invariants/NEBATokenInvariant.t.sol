@@ -10,6 +10,7 @@ contract NEBATokenInvariant is Test {
 
     address public adminTreasury;
     address public upgrader;
+    address public adminPauser;
     address public bot;
 
     address[] public actors;
@@ -19,14 +20,16 @@ contract NEBATokenInvariant is Test {
     uint256 public ghost_pauseCount;
     uint256 public ghost_unpauseCount;
 
-    constructor(NEBAToken _token, address _admin, address _upgrader, address _bot) {
+    constructor(NEBAToken _token, address _admin, address _upgrader, address _adminPauser, address _bot) {
         token = _token;
         adminTreasury = _admin;
         upgrader = _upgrader;
+        adminPauser = _adminPauser;
         bot = _bot;
 
         _addActor(adminTreasury);
         _addActor(upgrader);
+        _addActor(adminPauser);
         _addActor(bot);
         _addActor(address(this));
     }
@@ -126,6 +129,14 @@ contract NEBATokenInvariant is Test {
         }
         return sum;
     }
+
+    // Helper function to get actor index
+    function getActorIndex(address actor) public view returns (uint256) {
+        for (uint256 i = 0; i < actors.length; i++) {
+            if (actors[i] == actor) return i;
+        }
+        revert("Actor not found");
+    }
 }
 
 contract NEBATokenAccountingInvariantTest is Test {
@@ -134,21 +145,24 @@ contract NEBATokenAccountingInvariantTest is Test {
 
     address public adminTreasury;
     address public upgrader;
+    address public adminPauser;
     address public bot;
 
     function setUp() public {
         adminTreasury = makeAddr("adminTreasury");
         upgrader = makeAddr("upgrader");
+        adminPauser = makeAddr("adminPauser");
         bot = makeAddr("bot");
 
         NEBAToken implementation = new NEBAToken();
 
-        bytes memory initData = abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, bot);
+        bytes memory initData =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, adminPauser, bot);
 
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         token = NEBAToken(address(proxy));
 
-        handler = new NEBATokenInvariant(token, adminTreasury, upgrader, bot);
+        handler = new NEBATokenInvariant(token, adminTreasury, upgrader, adminPauser, bot);
 
         vm.prank(adminTreasury);
         token.transfer(address(handler), 100_000 * 10 ** 18);
@@ -210,6 +224,7 @@ contract NEBATokenHandlerUnitTest is Test {
 
     address public adminTreasury;
     address public upgrader;
+    address public adminPauser;
     address public bot;
     address public user1;
     address public user2;
@@ -217,18 +232,20 @@ contract NEBATokenHandlerUnitTest is Test {
     function setUp() public {
         adminTreasury = makeAddr("adminTreasury");
         upgrader = makeAddr("upgrader");
+        adminPauser = makeAddr("adminPauser");
         bot = makeAddr("bot");
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
 
         NEBAToken implementation = new NEBAToken();
 
-        bytes memory initData = abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, bot);
+        bytes memory initData =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, adminPauser, bot);
 
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         token = NEBAToken(address(proxy));
 
-        handler = new NEBATokenInvariant(token, adminTreasury, upgrader, bot);
+        handler = new NEBATokenInvariant(token, adminTreasury, upgrader, adminPauser, bot);
 
         vm.prank(adminTreasury);
         token.transfer(address(handler), 100_000 * 10 ** 18);
@@ -254,17 +271,19 @@ contract NEBATokenHandlerUnitTest is Test {
     }
 
     function test_Handler_TransferWithZeroBalance() public {
+        // Add user2 to actors first
         handler.transferToNewAddress(0, user2, 0);
 
         address[] memory actors = handler.getActors();
 
-        uint256 user2Index = 0;
+        uint256 user2Index = type(uint256).max;
         for (uint256 i = 0; i < actors.length; i++) {
             if (actors[i] == user2) {
                 user2Index = i;
                 break;
             }
         }
+        require(user2Index != type(uint256).max, "User2 not found in actors");
 
         assertEq(token.balanceOf(user2), 0, "User2 should have zero balance");
 
@@ -290,12 +309,12 @@ contract NEBATokenHandlerUnitTest is Test {
             address(
                 new ERC1967Proxy(
                     address(new NEBAToken()),
-                    abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, bot)
+                    abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, adminPauser, bot)
                 )
             )
         );
 
-        NEBATokenInvariant newHandler = new NEBATokenInvariant(newToken, adminTreasury, upgrader, bot);
+        NEBATokenInvariant newHandler = new NEBATokenInvariant(newToken, adminTreasury, upgrader, adminPauser, bot);
 
         newHandler.transferFrom(0, 1, 2, 1000);
     }
@@ -306,50 +325,68 @@ contract NEBATokenHandlerUnitTest is Test {
 
         handler.transferToNewAddress(0, user1, 1000);
 
-        handler.transferFrom(0, 1, 0, 1000);
+        uint256 user1Index = handler.getActorIndex(user1);
+
+        handler.transferFrom(user1Index, 0, user1Index, 1000);
     }
 
     function test_Handler_TransferFromZeroBalance() public {
         handler.transferToNewAddress(0, user2, 0);
 
+        uint256 user2Index = handler.getActorIndex(user2);
+        uint256 adminIndex = handler.getActorIndex(adminTreasury);
+
         uint256 beforeCount = handler.ghost_transferCount();
-        handler.transferFrom(3, 0, 1, 1000);
-        assertGe(handler.ghost_transferCount(), beforeCount, "Count tracked");
+        // Try to transfer from user2 (zero balance)
+        handler.transferFrom(user2Index, adminIndex, adminIndex, 1000);
+        assertEq(handler.ghost_transferCount(), beforeCount, "Transfer should not occur with zero balance");
     }
 
     function test_Handler_PauseUnauthorized() public {
         handler.transferToNewAddress(0, user1, 100);
 
-        handler.pause(999);
+        uint256 user1Index = handler.getActorIndex(user1);
+        uint256 beforeCount = handler.ghost_pauseCount();
+
+        handler.pause(user1Index);
+
+        assertEq(handler.ghost_pauseCount(), beforeCount, "Pause count should not increase for unauthorized user");
     }
 
     function test_Handler_UnpauseWhenNotPaused() public {
         assertFalse(token.paused(), "Should not be paused");
 
+        uint256 adminPauserIndex = handler.getActorIndex(adminPauser);
         uint256 beforeCount = handler.ghost_unpauseCount();
-        handler.unpause(0);
-        assertEq(handler.ghost_unpauseCount(), beforeCount, "Unpause should fail");
+        handler.unpause(adminPauserIndex);
+        assertEq(handler.ghost_unpauseCount(), beforeCount, "Unpause should fail when not paused");
     }
 
     function test_Handler_PauseAndUnpauseSuccess() public {
-        handler.pause(0);
+        uint256 adminPauserIndex = handler.getActorIndex(adminPauser);
+        uint256 botIndex = handler.getActorIndex(bot);
+
+        handler.pause(botIndex);
         assertEq(handler.ghost_pauseCount(), 1, "Pause count should increase");
         assertTrue(token.paused(), "Token should be paused");
 
-        handler.unpause(0);
+        // Admin pauser can unpause
+        handler.unpause(adminPauserIndex);
         assertEq(handler.ghost_unpauseCount(), 1, "Unpause count should increase");
         assertFalse(token.paused(), "Token should not be paused");
     }
 
     function test_Handler_TransferFromApprovalFails() public {
-        vm.prank(adminTreasury);
+        uint256 botIndex = handler.getActorIndex(bot);
+
+        vm.prank(bot);
         token.pause();
 
         uint256 beforeCount = handler.ghost_transferCount();
         handler.transferFrom(0, 1, 2, 1000);
-        assertEq(handler.ghost_transferCount(), beforeCount, "Transfer should not occur");
+        assertEq(handler.ghost_transferCount(), beforeCount, "Transfer should not occur when paused");
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         token.unpause();
     }
 }

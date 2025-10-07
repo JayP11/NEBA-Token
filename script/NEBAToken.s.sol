@@ -8,6 +8,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 contract DeployNEBAToken is Script {
     address public adminTreasury;
     address public upgraderAddress;
+    address public adminPauser;
     address public botAddress;
 
     NEBAToken public implementation;
@@ -17,10 +18,12 @@ contract DeployNEBAToken is Script {
     function setUp() public {
         adminTreasury = vm.envOr("ADMIN_TREASURY_ADDRESS", address(0));
         upgraderAddress = vm.envOr("UPGRADER_ADDRESS", address(0));
+        adminPauser = vm.envOr("ADMIN_PAUSER_ADDRESS", address(0));
         botAddress = vm.envOr("BOT_ADDRESS", address(0));
 
         require(adminTreasury != address(0), "ADMIN_TREASURY_ADDRESS not set");
         require(upgraderAddress != address(0), "UPGRADER_ADDRESS not set");
+        require(adminPauser != address(0), "ADMIN_PAUSER_ADDRESS not set");
         require(botAddress != address(0), "BOT_ADDRESS not set");
     }
 
@@ -31,6 +34,7 @@ contract DeployNEBAToken is Script {
         console.log("Deployer:", deployer);
         console.log("Admin Treasury:", adminTreasury);
         console.log("Upgrader Address:", upgraderAddress);
+        console.log("Admin Pauser:", adminPauser);
         console.log("Bot Address:", botAddress);
 
         vm.startBroadcast(deployerPrivateKey);
@@ -38,8 +42,13 @@ contract DeployNEBAToken is Script {
         implementation = new NEBAToken();
         console.log("Implementation deployed at:", address(implementation));
 
-        bytes memory initData =
-            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgraderAddress, botAddress);
+        bytes memory initData = abi.encodeWithSelector(
+            NEBAToken.initialize.selector,
+            adminTreasury,
+            upgraderAddress,
+            adminPauser,
+            botAddress
+        );
 
         proxy = new ERC1967Proxy(address(implementation), initData);
         console.log("Proxy deployed at:", address(proxy));
@@ -48,7 +57,10 @@ contract DeployNEBAToken is Script {
         console.log("Token name:", nebaToken.name());
         console.log("Token symbol:", nebaToken.symbol());
         console.log("Total supply:", nebaToken.totalSupply());
-        console.log("Admin Treasury balance:", nebaToken.balanceOf(adminTreasury));
+        console.log(
+            "Admin Treasury balance:",
+            nebaToken.balanceOf(adminTreasury)
+        );
 
         bytes32 DEFAULT_ADMIN_ROLE = 0x00;
         bytes32 ADMIN_PAUSER_ROLE = nebaToken.ADMIN_PAUSER_ROLE();
@@ -56,10 +68,22 @@ contract DeployNEBAToken is Script {
         bytes32 UPGRADER_ROLE = nebaToken.UPGRADER_ROLE();
 
         console.log("\n=== Role Verification ===");
-        console.log("Admin has DEFAULT_ADMIN_ROLE:", nebaToken.hasRole(DEFAULT_ADMIN_ROLE, adminTreasury));
-        console.log("Admin has ADMIN_PAUSER_ROLE:", nebaToken.hasRole(ADMIN_PAUSER_ROLE, adminTreasury));
-        console.log("Bot has BOT_PAUSER_ROLE:", nebaToken.hasRole(BOT_PAUSER_ROLE, botAddress));
-        console.log("Upgrader has UPGRADER_ROLE:", nebaToken.hasRole(UPGRADER_ROLE, upgraderAddress));
+        console.log(
+            "Admin has DEFAULT_ADMIN_ROLE:",
+            nebaToken.hasRole(DEFAULT_ADMIN_ROLE, adminTreasury)
+        );
+        console.log(
+            "Admin has ADMIN_PAUSER_ROLE:",
+            nebaToken.hasRole(ADMIN_PAUSER_ROLE, adminPauser)
+        );
+        console.log(
+            "Bot has BOT_PAUSER_ROLE:",
+            nebaToken.hasRole(BOT_PAUSER_ROLE, botAddress)
+        );
+        console.log(
+            "Upgrader has UPGRADER_ROLE:",
+            nebaToken.hasRole(UPGRADER_ROLE, upgraderAddress)
+        );
 
         vm.stopBroadcast();
 

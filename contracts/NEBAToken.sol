@@ -69,9 +69,13 @@ contract NEBAToken is
      * @param botAddress Address for the automated keeper bot (can only pause).
      * @dev Mints entire supply to adminTreasury and sets up roles
      */
-    function initialize(address adminTreasury, address upgraderAddress, address botAddress) public initializer {
+    function initialize(address adminTreasury, address upgraderAddress, address adminPauser, address botAddress)
+        public
+        initializer
+    {
         if (adminTreasury == address(0)) revert ZeroAddress();
         if (upgraderAddress == address(0)) revert ZeroAddress();
+        if (adminPauser == address(0)) revert ZeroAddress();
         if (botAddress == address(0)) revert ZeroAddress();
 
         __ERC20_init("NEBA Token", "NEBA");
@@ -81,7 +85,7 @@ contract NEBAToken is
         __ReentrancyGuard_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, adminTreasury);
-        _grantRole(ADMIN_PAUSER_ROLE, adminTreasury);
+        _grantRole(ADMIN_PAUSER_ROLE, adminPauser);
         _grantRole(BOT_PAUSER_ROLE, botAddress);
         _grantRole(UPGRADER_ROLE, upgraderAddress);
 

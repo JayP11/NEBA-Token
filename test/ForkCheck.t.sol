@@ -9,13 +9,15 @@ contract BaseSepoliaForkTest is Test {
     NEBAToken public token;
     address adminTreasury = makeAddr("admin");
     address upgrader = makeAddr("upgrader");
+    address adminPauser = makeAddr("adminPauser");
     address bot = makeAddr("bot");
     address user = makeAddr("user");
 
     function setUp() public {
         // Deploy and initialize
         NEBAToken impl = new NEBAToken();
-        bytes memory data = abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, bot);
+        bytes memory data =
+            abi.encodeWithSelector(NEBAToken.initialize.selector, adminTreasury, upgrader, adminPauser, bot);
         ERC1967Proxy proxy = new ERC1967Proxy(address(impl), data);
         token = NEBAToken(address(proxy));
     }
@@ -32,11 +34,11 @@ contract BaseSepoliaForkTest is Test {
     }
 
     function test_PauseAndUnpause() public {
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         token.pause();
         assertTrue(token.paused());
 
-        vm.prank(adminTreasury);
+        vm.prank(adminPauser);
         token.unpause();
         assertFalse(token.paused());
     }
