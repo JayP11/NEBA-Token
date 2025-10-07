@@ -11,11 +11,42 @@ via_ir = true
 
 snapshot_file = "tools/.gas-snapshot"
 
+fork_block_number = 12345678
+
+
+# Enable SMT Checker
+[profile.default.model_checker]
+enabled = true
+targets = ["assert", "overflow", "divByZero"]
+engine = "all"
+
+
 [profile.default.invariant]
 runs = 256
 depth = 15
 fail_on_revert = false
 call_override = false
+
+
+# RPC endpoints for networks
+[rpc_endpoints]
+base = "https://base-mainnet.g.alchemy.com/v2/FSAuFQb663vL6rtPMsUGBYPvVyE8fjd8"
+base_sepolia = "https://base-sepolia.g.alchemy.com/v2/FSAuFQb663vL6rtPMsUGBYPvVyE8fjd8"
+
+# Base Mainnet profile
+[profile.base]
+chain_id = 8453
+src = "contracts"
+out = "out"
+libs = ["lib"]
+
+# Base Sepolia testnet profile
+[profile.base_sepolia]
+chain_id = 84531
+src = "contracts"
+out = "out"
+libs = ["lib"]
+
 
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

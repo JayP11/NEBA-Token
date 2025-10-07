@@ -1,0 +1,13 @@
+{
+  "network": "base-mainnet",
+  "version": "1.0.0",
+  "roles": {
+    "DEFAULT_ADMIN_ROLE": "0xSafeAdmin3of5",
+    "ADMIN_PAUSER_ROLE": "0xSafeAdminPauser3of5",
+    "BOT_PAUSER_ROLE": "0xBotHardwareEOA",
+    "UPGRADER_ROLE": "0xUpgraderEOA"
+  },
+  "aux": {
+    "DEPLOYER": "0xDeployerEOA_NoRoles"
+  }
+}
