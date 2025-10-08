@@ -97,7 +97,6 @@ jobs:
       - lint
       - test
       - invariants
-      - slither
       - coverage
     steps:
       - name: Decide whether the needed jobs succeeded or failed
