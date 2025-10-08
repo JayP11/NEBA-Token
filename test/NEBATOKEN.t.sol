@@ -272,4 +272,40 @@ contract NEBATokenTest is Test {
         nebaToken.transferFrom(user1, user3, 100 * 10 ** 18);
         assertEq(nebaToken.balanceOf(user3), 100 * 10 ** 18);
     }
+
+    function test_StorageGap_PreventsFutureStorageCollisions() public {
+        vm.prank(adminTreasury);
+        assertEq(nebaToken.transfer(user1, 5000 ether), true);
+
+        uint256 user1BalanceBefore = nebaToken.balanceOf(user1);
+        uint256 totalSupplyBefore = nebaToken.totalSupply();
+        bool upgraderHasRoleBefore = nebaToken.hasRole(UPGRADER_ROLE, upgraderAddress);
+
+        NEBATokenV2 newImpl = new NEBATokenV2();
+        vm.prank(upgraderAddress);
+        nebaToken.upgradeToAndCall(address(newImpl), "");
+
+        NEBATokenV2 tokenV2 = NEBATokenV2(address(nebaToken));
+
+        vm.prank(adminTreasury);
+        tokenV2.setNewFeature(99999);
+
+        assertEq(tokenV2.balanceOf(user1), user1BalanceBefore, "Storage gap failed: balance corrupted");
+        assertEq(tokenV2.totalSupply(), totalSupplyBefore, "Storage gap failed: supply corrupted");
+        assertEq(
+            tokenV2.hasRole(UPGRADER_ROLE, upgraderAddress), upgraderHasRoleBefore, "Storage gap failed: role corrupted"
+        );
+
+        assertEq(tokenV2.newFeatureValue(), 99999, "New feature should work");
+    }
+}
+
+contract NEBATokenV2 is NEBAToken {
+    uint256 public newFeatureValue;
+
+    uint256[49] private __gapV2;
+
+    function setNewFeature(uint256 _value) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        newFeatureValue = _value;
+    }
 }

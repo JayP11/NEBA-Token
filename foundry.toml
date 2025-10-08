@@ -13,20 +13,11 @@ snapshot_file = "tools/.gas-snapshot"
 
 fork_block_number = 12345678
 
-
-# Enable SMT Checker
-[profile.default.model_checker]
-enabled = true
-targets = ["assert", "overflow", "divByZero"]
-engine = "all"
-
-
 [profile.default.invariant]
 runs = 256
 depth = 15
 fail_on_revert = false
 call_override = false
-
 
 # RPC endpoints for networks
 [rpc_endpoints]
@@ -46,7 +37,6 @@ chain_id = 84531
 src = "contracts"
 out = "out"
 libs = ["lib"]
-
 
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

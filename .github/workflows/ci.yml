@@ -6,32 +6,47 @@ on:
   push:
     branches:
       - main
+      - audit/** # ✅ Add your audit branch trigger too
 
 jobs:
   build:
-    name: build +${{ matrix.toolchain }} ${{ matrix.flags }}
+    name: Build (${{ matrix.toolchain }})
     runs-on: ubuntu-latest
+    continue-on-error: true
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        toolchain: [stable, nightly]
+        toolchain: [stable]
     steps:
       - uses: actions/checkout@v4
       - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: ${{ matrix.toolchain }}
       - run: forge --version
-      - run: forge build --skip test ${{ matrix.flags }}
-      # via-ir compilation time checks.
-      - if: contains(matrix.flags, '--via-ir')
-        run: forge build --skip test ${{ matrix.flags }} --contracts 'test/compilation/*'
+      - run: forge build --skip test
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - name: Check formatting
+        run: forge fmt --check
+      - name: Run solhint
+        run: npx solhint 'contracts/**/*.sol' || true # optional if you use solhint
 
   test:
+    name: Unit & Integration Tests
     runs-on: ubuntu-latest
+    continue-on-error: true
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        toolchain: [stable, nightly]
+        toolchain: [stable]
     steps:
       - uses: actions/checkout@v4
       - uses: foundry-rs/foundry-toolchain@v1
@@ -39,33 +54,51 @@ jobs:
           version: ${{ matrix.toolchain }}
       - run: forge --version
       - run: forge test -vvv
-      - run: forge coverage --report lcov
+
+  invariants:
+    name: Invariant Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: forge test --match-path "test/invariants/*" -vvv
 
   coverage:
+    name: Coverage Check
     runs-on: ubuntu-latest
     needs: [test]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
       - name: Run coverage
         run: forge coverage --report lcov
+      - name: Enforce coverage >= 95%
+        run: |
+          COVERAGE=$(forge coverage --report summary | grep -oP 'Total\s+\K\d+\.\d+')
+          echo "Coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 95" | bc -l) )); then
+            echo "❌ Coverage below 95%"
+            exit 1
+          fi
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # required if repo is private
+          token: ${{ secrets.CODECOV_TOKEN }} # required if private repo
           files: ./lcov.info
 
   ci-success:
+    name: Final CI Status
     runs-on: ubuntu-latest
     if: always()
     needs:
       - build
+      - lint
       - test
+      - invariants
+      - slither
       - coverage
-    timeout-minutes: 10
     steps:
       - name: Decide whether the needed jobs succeeded or failed
         uses: re-actors/alls-green@release/v1

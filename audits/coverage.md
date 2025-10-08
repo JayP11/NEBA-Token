@@ -14,3 +14,5 @@
 ╰------------------------------------------+------------------+------------------+-----------------+-----------------╯
 NOTE: Fuzz tests (test/NEBAToken.fuzz.t.sol) are not included in the above coverage table by default. They are used to explore edge cases and invariants beyond fixed test cases.
 ```
+
+[![codecov](https://codecov.io/gh/JayP11/NEBA-Token/graph/badge.svg?token=1RBCTQAIS2)](https://codecov.io/gh/JayP11/NEBA-Token)
