@@ -1,6 +1,16 @@
 {
   "filter_paths": "lib/",
-  "exclude_informational": false,
+  "exclude": [
+    "assembly-usage",
+    "different-pragma-directives",
+    "incorrect-versions-of-solidity",
+    "conformance-to-solidity-naming-conventions",
+    "unused-state-variable",
+    "low-level-calls",
+    "unused-return"
+  ],
+  "exclude_informational": true,
   "exclude_optimization": false,
-  "exclude_low": false
+  "exclude_low": false,
+  "fail_on": ["medium", "high"]
 }

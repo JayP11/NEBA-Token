@@ -9,10 +9,10 @@
             "type": "variable",
             "name": "__gap",
             "source_mapping": {
-              "start": 1637,
+              "start": 1639,
               "length": 25,
               "filename_relative": "contracts/NEBAToken.sol",
-              "filename_absolute": "/Users/apple/Desktop/neba-token/contracts/NEBAToken.sol",
+              "filename_absolute": "/Users/apple/Documents/upwork/NEBA-Token/contracts/NEBAToken.sol",
               "filename_short": "contracts/NEBAToken.sol",
               "is_dependency": false,
               "lines": [
@@ -26,10 +26,10 @@
                 "type": "contract",
                 "name": "NEBAToken",
                 "source_mapping": {
-                  "start": 1137,
-                  "length": 4445,
+                  "start": 1139,
+                  "length": 4435,
                   "filename_relative": "contracts/NEBAToken.sol",
-                  "filename_absolute": "/Users/apple/Desktop/neba-token/contracts/NEBAToken.sol",
+                  "filename_absolute": "/Users/apple/Documents/upwork/NEBA-Token/contracts/NEBAToken.sol",
                   "filename_short": "contracts/NEBAToken.sol",
                   "is_dependency": false,
                   "lines": [
@@ -155,16 +155,7 @@
                     146,
                     147,
                     148,
-                    149,
-                    150,
-                    151,
-                    152,
-                    153,
-                    154,
-                    155,
-                    156,
-                    157,
-                    158
+                    149
                   ],
                   "starting_column": 1,
                   "ending_column": 2
@@ -191,10 +182,10 @@
             "type": "variable",
             "name": "__gap",
             "source_mapping": {
-              "start": 1637,
+              "start": 1639,
               "length": 25,
               "filename_relative": "contracts/NEBAToken.sol",
-              "filename_absolute": "/Users/apple/Desktop/neba-token/contracts/NEBAToken.sol",
+              "filename_absolute": "/Users/apple/Documents/upwork/NEBA-Token/contracts/NEBAToken.sol",
               "filename_short": "contracts/NEBAToken.sol",
               "is_dependency": false,
               "lines": [
@@ -208,10 +199,10 @@
                 "type": "contract",
                 "name": "NEBAToken",
                 "source_mapping": {
-                  "start": 1137,
-                  "length": 4445,
+                  "start": 1139,
+                  "length": 4435,
                   "filename_relative": "contracts/NEBAToken.sol",
-                  "filename_absolute": "/Users/apple/Desktop/neba-token/contracts/NEBAToken.sol",
+                  "filename_absolute": "/Users/apple/Documents/upwork/NEBA-Token/contracts/NEBAToken.sol",
                   "filename_short": "contracts/NEBAToken.sol",
                   "is_dependency": false,
                   "lines": [
@@ -337,16 +328,7 @@
                     146,
                     147,
                     148,
-                    149,
-                    150,
-                    151,
-                    152,
-                    153,
-                    154,
-                    155,
-                    156,
-                    157,
-                    158
+                    149
                   ],
                   "starting_column": 1,
                   "ending_column": 2
@@ -358,10 +340,10 @@
             "type": "contract",
             "name": "NEBAToken",
             "source_mapping": {
-              "start": 1137,
-              "length": 4445,
+              "start": 1139,
+              "length": 4435,
               "filename_relative": "contracts/NEBAToken.sol",
-              "filename_absolute": "/Users/apple/Desktop/neba-token/contracts/NEBAToken.sol",
+              "filename_absolute": "/Users/apple/Documents/upwork/NEBA-Token/contracts/NEBAToken.sol",
               "filename_short": "contracts/NEBAToken.sol",
               "is_dependency": false,
               "lines": [
@@ -487,24 +469,15 @@
                 146,
                 147,
                 148,
-                149,
-                150,
-                151,
-                152,
-                153,
-                154,
-                155,
-                156,
-                157,
-                158
+                149
               ],
               "starting_column": 1,
               "ending_column": 2
             }
           }
         ],
-        "description": "NEBAToken.__gap (contracts/NEBAToken.sol#41) is never used in NEBAToken (contracts/NEBAToken.sol#27-158)\n",
-        "markdown": "[NEBAToken.__gap](contracts/NEBAToken.sol#L41) is never used in [NEBAToken](contracts/NEBAToken.sol#L27-L158)\n",
+        "description": "NEBAToken.__gap (contracts/NEBAToken.sol#41) is never used in NEBAToken (contracts/NEBAToken.sol#27-149)\n",
+        "markdown": "[NEBAToken.__gap](contracts/NEBAToken.sol#L41) is never used in [NEBAToken](contracts/NEBAToken.sol#L27-L149)\n",
         "first_markdown_element": "contracts/NEBAToken.sol#L41",
         "id": "b7c81fbb2912fa2b5d163e41d12ad95cac20c3c506ac90bf7f610cd383f0b743",
         "check": "unused-state",

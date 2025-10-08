@@ -2,9 +2,12 @@
 
 ## Project: NEBA Token
 
-**Analysis Date:** October 5, 2025  
+**Analysis Date:** October 8, 2025  
 **Analyzer:** Slither Static Analysis Tool  
 **Contract:** NEBAToken.sol
+
+**JSON Report:** `audits/slitherResults.json`
+**Configuration:** `tools/slither.config.json`
 
 ---
 
@@ -136,7 +139,7 @@ uint256[50] private __gap;
 **Command Used:**
 
 ```bash
-slither contracts/NEBAToken.sol --json slither-report.json
+   slither . --json audits/slitherResults.json --config-file tools/slither.config.json
 ```
 
 **Slither Version:** 0.11.3
@@ -181,6 +184,10 @@ The NEBAToken contract passes the Slither static analysis with no security vulne
 }
 ```
 
+### SMT Checker
+
+Not compatible with current contract structure due to UUPS upgradeable pattern, multiple inheritance, and role-based modifiers. Although the contract uses straightforward arithmetic and no complex math operations, SMTChecker cannot effectively analyze proxy-based logic or inherited modifiers. Formal verification coverage is instead achieved through invariant, fuzz, integration, and fork-based testing in Foundry.
+
 ### Additional Resources
 
 - [Slither Documentation](https://github.com/crytic/slither)
@@ -188,6 +195,3 @@ The NEBAToken contract passes the Slither static analysis with no security vulne
 - [Storage Gaps Explained](https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#storage-gaps)
 
 ---
-
-**Report Generated:** October 5, 2025  
-**Next Review Date:** (Schedule next audit)

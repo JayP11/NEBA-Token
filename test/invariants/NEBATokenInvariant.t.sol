@@ -377,8 +377,6 @@ contract NEBATokenHandlerUnitTest is Test {
     }
 
     function test_Handler_TransferFromApprovalFails() public {
-        uint256 botIndex = handler.getActorIndex(bot);
-
         vm.prank(bot);
         token.pause();
 

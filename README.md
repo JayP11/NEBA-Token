@@ -40,11 +40,12 @@ NEBAToken
 
 ### Roles
 
-| Role               | Can Do                      |
-| ------------------ | --------------------------- |
-| **Admin Treasury** | Grant roles, pause, unpause |
-| **Bot Pauser**     | Pause only                  |
-| **Upgrader**       | Upgrade contract            |
+| Role               | Can Do                 |
+| ------------------ | ---------------------- |
+| **Admin Treasury** | Grant roles and Revoke |
+| **Admin Pauser**   | Pause & UnPause        |
+| **Bot Pauser**     | Pause only             |
+| **Upgrader**       | Upgrade contract       |
 
 - **ADMIN_PAUSER_ROLE**: Can pause/unpause transfers
 - **BOT_PAUSER_ROLE**: Can pause transfers, but cannot unpause (for automated systems)
@@ -71,11 +72,6 @@ forge install
 forge install OpenZeppelin/openzeppelin-contracts-upgradeable@5.0.2
 forge install foundry-rs/forge-std
 
-# Build contracts
-forge build
-
-# Run tests
-forge test
 ```
 
 ### Deployment
@@ -89,29 +85,12 @@ bytes memory initData = abi.encodeWithSelector(
     NEBAToken.initialize.selector,
     adminTreasury,    // Address for day-to-day management
     upgraderAddress,  // Address that can upgrade (multisig recommended)
+    adminPauser,      // Address that can pause and unpause
     botAddress        // Address for automated keeper bot
 );
 
 ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
 NEBAToken nebaToken = NEBAToken(address(proxy));
-```
-
-## 🧪 Testing
-
-The project includes comprehensive tests covering all functionality:
-
-```bash
-# Run all tests
-forge test
-
-# Run tests with gas reporting
-forge test --gas-report
-
-# Run specific test
-forge test --match-test test_initialize
-
-# Run tests with verbosity
-forge test -vvv
 ```
 
 ## LOC
@@ -141,40 +120,82 @@ Solidity                         1             17             57             71
 NOTE: Fuzz tests (test/NEBAToken.fuzz.t.sol) are not included in the above coverage table by default. They are used to explore edge cases and invariants beyond fixed test cases.
 ```
 
-## 📊 Test Coverage Summary
-
-The NEBA Token contract has comprehensive test coverage with **51 test cases** covering all critical functionality:
-
-### 📈 Coverage Statistics
-
-- **Total Tests**: 51
-- **Pass Rate**: 100% (51/51 passed)
-
-### 🔧 Test Execution
-
-```bash
-# Run all tests
-forge test
-
-# Run with gas reporting
-forge test --gas-report
-
-# Run specific test category
-forge test --match-test "test_pause"
-
-# Run with detailed output
-forge test -vvv
-```
-
-## Test Coverage
-
 [![codecov](https://codecov.io/gh/JayP11/NEBA-Token/graph/badge.svg?token=1RBCTQAIS2)](https://codecov.io/gh/JayP11/NEBA-Token)
 
 For full coverage details, see [audits/coverage.md](./audits/coverage.md)
 
+## 📊 Test Coverage Summary
+
+The NEBA Token contract has comprehensive test coverage with **70 test cases** covering all critical functionality.
+
+### 📈 Coverage Statistics
+
+- **Total Tests**: 70
+- **Pass Rate**: 100% (70/70 passed)
+
+## 🧮 Audit Factsheet
+
+| Item              | Value                                    |
+| ----------------- | ---------------------------------------- |
+| Solidity Pragma   | ^0.8.20                                  |
+| Solidity Compiler | 0.8.30(pinned in foundry.toml)           |
+| Optimizer Runs    | 200                                      |
+| Networks          | Base Mainnet, Base Sepolia               |
+| Chain IDs         | 8453 (Mainnet), 84532 (Sepolia)          |
+| Third-party Deps  | OpenZeppelin v5 (Upgradeable), Forge Std |
+| Total LOC         | 71 (Solidity)                            |
+
+### Files Architecture
+
+├── 📁 audits/ # Security & audit artifacts
+│ ├── [NEBAToken](audits/addresses.json) # Deployed contract addresses per network
+│ ├── [NEBAToken](audits/coverage.md) # Detailed coverage summary
+│ ├── [NEBAToken](audits/RUNBOOK.md) # Operational runbook for incident response
+│ ├── [NEBAToken](audits/emergencyRunbook.md) # Emergency runbook for incident response
+│ ├── [NEBAToken](audits/slither.md) # Static analysis summary (Slither)
+│ ├── [NEBAToken](audits/slitherResults.json) # Full JSON output from Slither analysis
+│ └── [NEBAToken](audits/threat-model.md) # Threat modeling & security assumptions
+|
+├── 📁 contracts/ # Core smart contracts
+│ └── [NEBAToken](contracts/NEBAToken.sol) # Upgradeable ERC-20 implementation
+|
+├── 📁 docs/ # Generated contract [NatSpec] documentation
+│ └── [NEBAToken](docs/src/contracts/NEBAToken.sol/NEBAToken.md)
+| └── [NEBAToken](docs/DEPLOYMENT.md) # DEPLOYMENT & VERIFICATION
+|
+├── 📁 script/ # Deployment & utility scripts
+│ └── [NEBAToken](script/NEBAToken.s.sol) # Foundry script for deploying the token
+|
+├── 📁 test/ # Full test suite (Foundry)
+│ ├── invariants/ # Invariant & stateful fuzz tests
+│ │ └── [NEBAToken](test/invariants/NEBATokenInvariant.t.sol)
+│ ├── [NEBAToken](test/ForkCheck.t.sol) # Fork verification test
+│ ├── [NEBAToken](test/NEBAToken.integration.t.sol) # Integration tests
+│ ├── [NEBAToken](test/NEBAToken.t.sol) # Core unit tests
+│ └── [NEBAToken](test/NEBATokenFuzzTest.t.sol) # Fuzz tests for edge cases
+│
+├── 📁 tools/ # Dev & analysis tooling
+│ ├── [NEBAToken](tools/.gas-snapshot) # Gas report snapshot (for`forge snapshot`)
+│ ├── [NEBAToken](tools/slither.config.json) # Slither analysis configuration
+│ └── [NEBAToken](tools/storage-layout-v1.md) # Storage layout snapshot for upgrade safety
+│
+├── 📄 [NEBAToken](./foundry.toml) # Foundry configuration (compiler, optimizer, network)
+├── 📄 [NEBAToken](./README.md) # Project documentation
+├── 📄 [NEBAToken](./lcov.info) # Coverage report (for Codecov)
+├── 📄 [NEBAToken](./broadcast/NEBAToken.s.sol) # Broadcast
+
+### 🧰 Commands
+
+```bash
+forge build           # Compile contracts
+forge test            # Run tests
+forge script ...      # Deploy
+forge coverage
+```
+
 ## 📚 Documentation
 
-Full contract documentation is available in the [docs](./docs/src/contracts/NEBAToken.sol/contract.NEBAToken.md) directory, generated from NatSpec comments.
+Full contract documentation is available in the [docs](./docs/src/contracts/NEBAToken.sol/contract.NEBAToken.md) directory, generated from [NatSpec] comments.
 
 ### View Documentation
 
@@ -260,8 +281,10 @@ event CircuitBreakerActivated(address indexed by, uint256 timestamp);
 event CircuitBreakerDeactivated(address indexed by, uint256 timestamp);
 ```
 
-## Architecture Diagram
-
 ## 📄 License
 
 This project is licensed under the [MIT License](./LICENSE).
+
+```
+
+```
