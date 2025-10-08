@@ -145,6 +145,45 @@ The NEBA Token contract has comprehensive test coverage with **70 test cases** c
 | Third-party Deps  | OpenZeppelin v5 (Upgradeable), Forge Std |
 | Total LOC         | 71 (Solidity)                            |
 
+### Files Architecture
+
+├── 📁 audits/ # Security & audit artifacts
+│ ├── [NEBAToken](audits/addresses.json) # Deployed contract addresses per network
+│ ├── [NEBAToken](audits/coverage.md) # Detailed coverage summary
+│ ├── [NEBAToken](audits/RUNBOOK.md) # Operational runbook for incident response
+│ ├── [NEBAToken](audits/emergencyRunbook.md) # Emergency runbook for incident response
+│ ├── [NEBAToken](audits/slither.md) # Static analysis summary (Slither)
+│ ├── [NEBAToken](audits/slitherResults.json) # Full JSON output from Slither analysis
+│ └── [NEBAToken](audits/threat-model.md) # Threat modeling & security assumptions
+|
+├── 📁 contracts/ # Core smart contracts
+│ └── [NEBAToken](contracts/NEBAToken.sol) # Upgradeable ERC-20 implementation
+|
+├── 📁 docs/ # Generated contract [NatSpec] documentation
+│ └── [NEBAToken](docs/src/contracts/NEBAToken.sol/NEBAToken.md)
+| └── [NEBAToken](docs/DEPLOYMENT.md) # DEPLOYMENT & VERIFICATION
+|
+├── 📁 script/ # Deployment & utility scripts
+│ └── [NEBAToken](script/NEBAToken.s.sol) # Foundry script for deploying the token
+|
+├── 📁 test/ # Full test suite (Foundry)
+│ ├── invariants/ # Invariant & stateful fuzz tests
+│ │ └── [NEBAToken](test/invariants/NEBATokenInvariant.t.sol)
+│ ├── [NEBAToken](test/ForkCheck.t.sol) # Fork verification test
+│ ├── [NEBAToken](test/NEBAToken.integration.t.sol) # Integration tests
+│ ├── [NEBAToken](test/NEBAToken.t.sol) # Core unit tests
+│ └── [NEBAToken](test/NEBATokenFuzzTest.t.sol) # Fuzz tests for edge cases
+│
+├── 📁 tools/ # Dev & analysis tooling
+│ ├── [NEBAToken](tools/.gas-snapshot) # Gas report snapshot (for`forge snapshot`)
+│ ├── [NEBAToken](tools/slither.config.json) # Slither analysis configuration
+│ └── [NEBAToken](tools/storage-layout-v1.md) # Storage layout snapshot for upgrade safety
+│
+├── 📄 [NEBAToken](./foundry.toml) # Foundry configuration (compiler, optimizer, network)
+├── 📄 [NEBAToken](./README.md) # Project documentation
+├── 📄 [NEBAToken](./lcov.info) # Coverage report (for Codecov)
+├── 📄 [NEBAToken](./broadcast/NEBAToken.s.sol) # Broadcast
+
 ### 🧰 Commands
 
 ```bash
@@ -245,3 +284,7 @@ event CircuitBreakerDeactivated(address indexed by, uint256 timestamp);
 ## 📄 License
 
 This project is licensed under the [MIT License](./LICENSE).
+
+```
+
+```
