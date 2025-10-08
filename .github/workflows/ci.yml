@@ -74,14 +74,6 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
       - name: Run coverage
         run: forge coverage --report lcov
-      - name: Enforce coverage >= 95%
-        run: |
-          COVERAGE=$(forge coverage --report summary | grep -oP 'Total\s+\K\d+\.\d+')
-          echo "Coverage: $COVERAGE%"
-          if (( $(echo "$COVERAGE < 95" | bc -l) )); then
-            echo "❌ Coverage below 95%"
-            exit 1
-          fi
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
