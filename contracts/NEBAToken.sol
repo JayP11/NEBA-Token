@@ -52,27 +52,29 @@ contract NEBAToken is
     }
 
     modifier onlyPausers() {
-        if (!hasRole(ADMIN_PAUSER_ROLE, msg.sender) && !hasRole(BOT_PAUSER_ROLE, msg.sender)) {
+        if (
+            !hasRole(ADMIN_PAUSER_ROLE, msg.sender) &&
+            !hasRole(BOT_PAUSER_ROLE, msg.sender)
+        ) {
             revert UnauthorizedPauser();
         }
         _;
     }
 
     /**
-     * @notice Initializes the NEBA Token contract and grants roles to the adminTreasury
-     * DEFAULT_ADMIN_ROLE has all permissions and it can grant and revoke roles
-     * ADMIN_PAUSER_ROLE and BOT_PAUSER_ROLE have the ability to pause and unpause the token
-     * BOT_PAUSER_ROLE has the ability to pause the token for bots
-     * UPGRADER_ROLE has the ability to upgrade the contract
-     * @param adminTreasury Address for day-to-day management (admin, pauser).
-     * @param upgraderAddress Address that can upgrade the contract (should be a separate, high-security multisig/wallet).
-     * @param botAddress Address for the automated keeper bot (can only pause).
-     * @dev Mints entire supply to adminTreasury and sets up roles
+     * @notice Initializes NEBA and configures roles & supply.
+     * @param adminTreasury Receives INITIAL_SUPPLY and DEFAULT_ADMIN_ROLE.
+     * @param upgraderAddress Address granted UPGRADER_ROLE.
+     * @param adminPauser Address granted ADMIN_PAUSER_ROLE. (can pause and unpause).
+     * @param botAddress Address granted BOT_PAUSER_ROLE (can pause only).
+     * @dev Pausing is global; both pauser roles can pause; only ADMIN_PAUSER_ROLE can unpause.
      */
-    function initialize(address adminTreasury, address upgraderAddress, address adminPauser, address botAddress)
-        public
-        initializer
-    {
+    function initialize(
+        address adminTreasury,
+        address upgraderAddress,
+        address adminPauser,
+        address botAddress
+    ) public initializer {
         if (adminTreasury == address(0)) revert ZeroAddress();
         if (upgraderAddress == address(0)) revert ZeroAddress();
         if (adminPauser == address(0)) revert ZeroAddress();
@@ -115,7 +117,9 @@ contract NEBAToken is
      * @param newImplementation Address of new implementation contract
      * @dev Restricted to UPGRADER_ROLE only
      */
-    function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyRole(UPGRADER_ROLE) {}
 
     /**
      * @notice Internal function to update token balances
@@ -124,7 +128,11 @@ contract NEBAToken is
      * @param amount Amount to transfer
      * @dev Enforces pause state for transfers.
      */
-    function _update(address from, address to, uint256 amount)
+    function _update(
+        address from,
+        address to,
+        uint256 amount
+    )
         internal
         override(ERC20Upgradeable, ERC20PausableUpgradeable)
         whenNotPaused
@@ -138,12 +146,12 @@ contract NEBAToken is
      * @param spender Address allowed to spend
      * @param value Amount approved
      */
-    function _approve(address owner, address spender, uint256 value, bool emitEvent)
-        internal
-        virtual
-        override
-        whenNotPaused
-    {
+    function _approve(
+        address owner,
+        address spender,
+        uint256 value,
+        bool emitEvent
+    ) internal virtual override whenNotPaused {
         super._approve(owner, spender, value, emitEvent);
     }
 }
