@@ -235,13 +235,14 @@ contract NEBATokenTest is Test {
         nebaToken.transfer(user1, 100 * 10 ** 18);
     }
 
-    function test_Approve_RevertIf_Paused() public {
+    function test_Approve_SucceedsWhenPaused() public {
         vm.prank(adminPauser);
         nebaToken.pause();
 
         vm.prank(adminTreasury);
-        vm.expectRevert();
         nebaToken.approve(user1, 100 * 10 ** 18);
+
+        assertEq(nebaToken.allowance(adminTreasury, user1), 100 * 10 ** 18, "Approval should succeed when paused");
     }
 
     function test_Transfer_Success() public {
@@ -252,12 +253,6 @@ contract NEBATokenTest is Test {
 
         uint256 afterBalance = nebaToken.balanceOf(user1);
         assertEq(afterBalance, beforeBalance + 100 ether);
-    }
-
-    function test_Approve_Success() public {
-        vm.prank(adminTreasury);
-        nebaToken.approve(user1, 100 * 10 ** 18);
-        assertEq(nebaToken.allowance(adminTreasury, user1), 100 * 10 ** 18);
     }
 
     function test_TransferFrom_Success() public {

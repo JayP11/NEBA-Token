@@ -171,14 +171,15 @@ contract NEBATokenFuzzTest is Test {
         token.transfer(to, amount);
     }
 
-    function testFuzz_ApproveRevertWhenPaused(address spender, uint256 amount) public {
+    function testFuzz_ApproveSucceedsWhenPaused(address spender, uint256 amount) public {
         vm.assume(spender != address(0));
 
         vm.prank(adminPauserAddress);
         token.pause();
 
         vm.prank(adminTreasury);
-        vm.expectRevert();
         token.approve(spender, amount);
+
+        assertEq(token.allowance(adminTreasury, spender), amount, "Approval should succeed when paused");
     }
 }

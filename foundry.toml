@@ -3,6 +3,7 @@ src = "contracts"
 out = "out"
 libs = ["lib"]
 solc_version = "0.8.30"
+evm_version = "prague"
 
 optimizer = true
 optimizer_runs = 200
@@ -30,6 +31,7 @@ chain_id = 8453
 src = "contracts"
 out = "out"
 libs = ["lib"]
+evm_version = "prague"
 
 # Base Sepolia testnet profile
 [profile.base_sepolia]
@@ -37,6 +39,7 @@ chain_id = 84531
 src = "contracts"
 out = "out"
 libs = ["lib"]
+evm_version = "prague"
 
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
