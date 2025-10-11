@@ -135,12 +135,7 @@ contract NEBAToken is
      * @param spender Address allowed to spend
      * @param value Amount approved
      */
-    function _approve(address owner, address spender, uint256 value, bool emitEvent)
-        internal
-        virtual
-        override
-        whenNotPaused
-    {
+    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal virtual override {
         super._approve(owner, spender, value, emitEvent);
     }
 }
