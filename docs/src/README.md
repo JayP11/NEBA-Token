@@ -105,7 +105,7 @@ forge test --match-test test_initialize
 forge test -vvv
 ```
 
-## solc_version = 0.8.20
+## solc_version = 0.8.30
 
 ## LOC
 
@@ -189,7 +189,7 @@ libs = ["lib"]
 
 ### External Dependencies
 
-Contracts use ^0.8.20 to remain forward-compatible with future compiler releases.
+Contracts use 0.8.30
 
 - **OpenZeppelin Contracts**: v5.0+ (upgradeable versions)
 - **Forge Standard Library**: For testing utilities

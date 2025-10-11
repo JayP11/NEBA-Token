@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.30;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
@@ -93,7 +93,7 @@ contract NEBAToken is
      * @notice Pauses token transfers by ADMIN_PAUSER_ROLE or BOT_PAUSER_ROLE
      * @dev Can only be called by ADMIN_PAUSER_ROLE and BOT_PAUSER_ROLE.
      */
-    function pause() external onlyPausers whenNotPaused {
+    function pause() external onlyPausers whenNotPaused nonReentrant {
         _pause();
         emit CircuitBreakerActivated(msg.sender, block.timestamp);
     }
@@ -102,7 +102,7 @@ contract NEBAToken is
      * @notice Unpauses token transfers by ADMIN_PAUSER_ROLE
      * @dev Can only be called by ADMIN_PAUSER_ROLE.
      */
-    function unpause() external onlyRole(ADMIN_PAUSER_ROLE) whenPaused {
+    function unpause() external onlyRole(ADMIN_PAUSER_ROLE) whenPaused nonReentrant {
         _unpause();
         emit CircuitBreakerDeactivated(msg.sender, block.timestamp);
     }

@@ -137,7 +137,7 @@ The NEBA Token contract has comprehensive test coverage with **70 test cases** c
 
 | Item              | Value                                    |
 | ----------------- | ---------------------------------------- |
-| Solidity Pragma   | ^0.8.20                                  |
+| Solidity Pragma   | 0.8.30                                   |
 | Solidity Compiler | 0.8.30(pinned in foundry.toml)           |
 | Optimizer Runs    | 200                                      |
 | Networks          | Base Mainnet, Base Sepolia               |
@@ -235,7 +235,7 @@ call_override = false
 
 ### External Dependencies
 
-Contracts use ^0.8.20 to remain forward-compatible with future compiler releases.
+Contracts use 0.8.30
 
 - **OpenZeppelin Contracts**: v5.0+ (upgradeable versions)
 - **Forge Standard Library**: For testing utilities

@@ -143,7 +143,7 @@ uint256[50] private __gap;
 ```
 
 **Slither Version:** 0.11.3
-**Solidity Version:** 0.8.20
+**Solidity Version:** 0.8.30
 **Framework:** Foundry
 
 ---
