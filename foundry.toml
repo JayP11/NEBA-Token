@@ -20,11 +20,6 @@ depth = 15
 fail_on_revert = false
 call_override = false
 
-# RPC endpoints for networks
-[rpc_endpoints]
-base = "https://base-mainnet.g.alchemy.com/v2/FSAuFQb663vL6rtPMsUGBYPvVyE8fjd8"
-base_sepolia = "https://base-sepolia.g.alchemy.com/v2/FSAuFQb663vL6rtPMsUGBYPvVyE8fjd8"
-
 # Base Mainnet profile
 [profile.base]
 chain_id = 8453
